@@ -1,0 +1,63 @@
+{
+  "name": "@panhezeng/el-tree-table",
+  "description": "A Vue component",
+  "version": "1.0.0",
+  "author": "潘何增 <panhezeng@gmail.com> (http://apsay.com/)",
+  "license": "MIT",
+  "private": false,
+  "keywords": [
+    "vuejs",
+    "vue component",
+    "element-ui",
+    "tree",
+    "table",
+    "tree table"
+  ],
+  "homepage": "https://github.com/panhezeng/el-tree-table.git#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panhezeng/el-tree-table.git"
+  },
+  "files": [
+    "dist",
+    "src",
+    "package.json",
+    "README"
+  ],
+  "main": "dist/el-tree-table.min.js",
+  "scripts": {
+    "dev:example": "webpack-dev-server --mode development --open --hot --config webpack.example.config.js",
+    "build:example": "webpack --mode production --config webpack.example.config.js",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "element-ui": "latest",
+    "vue": "latest"
+  },
+  "devDependencies": {
+    "@panhezeng/before-run-webpack-plugin": "latest",
+    "babel-loader": "latest",
+    "@babel/core": "latest",
+    "@babel/plugin-syntax-dynamic-import": "latest",
+    "@babel/plugin-transform-runtime": "latest",
+    "@babel/preset-env": "latest",
+    "css-loader": "latest",
+    "file-loader": "^1.1.4",
+    "url-loader": "^1.0.1",
+    "vue-loader": "latest",
+    "vue-style-loader": "latest",
+    "vue-template-compiler": "latest",
+    "webpack": "latest",
+    "webpack-cli": "latest",
+    "webpack-dev-server": "latest"
+  },
+  "engines": {
+    "node": ">= 10.0.0",
+    "npm": ">= 6.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
