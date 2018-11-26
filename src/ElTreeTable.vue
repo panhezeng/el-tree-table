@@ -1,5 +1,8 @@
 <template>
-  <el-table ref="treeTable" class="el-tree-table" :data="data" :row-style="getRowStyle"
+  <el-table ref="treeTable" class="el-tree-table" :row-style="getRowStyle"
+            :data="data"
+            @select="handleSelect"
+            @selection-change="handleSelectionChange"
             v-bind="$attrs"
             v-on="$listeners">
     <el-table-column
@@ -9,10 +12,10 @@
       <template slot-scope="scope">
         <div :style="`margin-left: ${scope.row.treeLevel * columnExpandIndent}px;`">
           <span @click="toggleExpand(scope.row,scope.$index)" v-if="scope.row.treeHasChildren">
-            <i v-if="scope.row.treeExpand" class="el-icon-caret-bottom"/>
-            <i v-else class="el-icon-caret-right"/>
+            <i v-if="scope.row.treeExpand" :class="expandIcon"/>
+            <i v-else :class="collapseIcon"/>
           </span>
-          <span v-else><i class="el-icon-minus"/></span>
+          <span v-else><i :class="leafIcon"/></span>
         </div>
       </template>
     </el-table-column>
@@ -38,10 +41,12 @@
     props: {
       // 数据的唯一标识key
       uniqueKey: {type: String, default: "id"},
+      // 获取树形数据的子节点的key
       treeChildrenKey: {type: String, default: "children"},
       // 树形数据结构，用来转换成表格数据
       treeData: {},
       // 表格数据结构，如果传了这个，就不用treeData了
+      // tableData的row数据对象必须有row.treeFullIndex，row.treeLevel, row.treeHasChildren属性，而且值必须正确有效
       tableData: {},
       // 是否展开所有
       expandAll: {
@@ -63,18 +68,31 @@
         type: Number,
         default: 20
       },
-      // 要渲染的列数据，没有则不渲染，使用者可以通过slot，自己实现
+      // 要渲染的列数据，没有则不渲染，开发者可以通过slot，自己实现
       columns: {
         type: Array,
         default() {
           return []
         }
+      },
+      expandIcon: {
+        type: String,
+        default: 'el-icon-caret-bottom'
+      },
+      collapseIcon: {
+        type: String,
+        default: 'el-icon-caret-right'
+      },
+      leafIcon: {
+        type: String,
+        default: 'el-icon-minus'
       }
     },
     data() {
       return {
         data: [],
-        columnExpandWidth: columnExpandWidthInit
+        columnExpandWidth: columnExpandWidthInit,
+        multipleSelection: []
       };
     },
     watch: {
@@ -94,9 +112,7 @@
     methods: {
       initData() {
         if (Object.prototype.toString.call(this.treeData) === "[object Array]" && this.treeData.length) {
-          const data = []
-          this.treeToTableData(JSON.parse(JSON.stringify(this.treeData)), data)
-          this.data = data;
+          this.data = this.treeToTableData(JSON.parse(JSON.stringify(this.treeData)))
         } else if (Object.prototype.toString.call(this.tableData) === "[object Array]" && this.tableData.length) {
           this.data = JSON.parse(JSON.stringify(this.tableData));
         }
@@ -109,8 +125,7 @@
        * @param level 当前递归的层级
        * @return {Array}
        */
-      treeToTableData(from, to, fullIndex = "", level = 0) {
-
+      treeToTableData(from, to = [], fullIndex = "", level = 0) {
         if (
           Object.prototype.toString.call(from) === "[object Array]" &&
           from.length
@@ -119,6 +134,7 @@
             const node = from[i];
             // 表格一行的数据
             const row = JSON.parse(JSON.stringify(node));
+            row.rowIndex = to.length;
             to.push(row);
             // 第一层初始化
             if (level === 0) {
@@ -135,7 +151,7 @@
             }
             // 节点的唯一标识
             fullIndex = `${fullIndex}${i}`;
-            row.treeIndex = fullIndex;
+            row.treeFullIndex = fullIndex;
             row.treeLevel = level;
             row.treeExpand = this.expandAll;
             row.treeHasChildren = false;
@@ -155,6 +171,7 @@
             }
           }
         }
+        return to
       },
       getRowStyle({row}) {
         return row.rowShow === false ? 'display:none;' : ''
@@ -163,22 +180,22 @@
         clickRow.treeExpand = !clickRow.treeExpand;
         let maxLevelShow = clickRow.treeLevel;
         let continueTest = null;
-        // 必须从上到下遍历，不然正则匹配跳过子节点逻辑无法实现
+        // 必须从上到下遍历，不然通过正则匹配处理子节点row的逻辑无法实现
         for (let i = 0, len = this.data.length; i < len; i++) {
           const row = this.data[i];
           // 如果遍历的行不是点击的行，则继续
           if (row[this.uniqueKey] !== clickRow[this.uniqueKey]) {
             // 如果有跳过检查，并且遍历的行满足条件，则执行跳过
             // 否则如果遍历的行是当前点击行的子节点
-            if (continueTest && continueTest.test(row.treeIndex)) {
+            if (continueTest && continueTest.test(row.treeFullIndex)) {
               continue;
-            } else if (new RegExp(`^${clickRow.treeIndex}`).test(row.treeIndex)) {
+            } else if (new RegExp(`^${clickRow.treeFullIndex}`).test(row.treeFullIndex)) {
               row.rowShow = clickRow.treeExpand;
 
               continueTest = null;
               // 如果当前点击是展开，并且下一行有子节点，而且是不展开，则它后面的子节点都跳过
               if (clickRow.treeExpand && row.treeHasChildren && !row.treeExpand) {
-                continueTest = new RegExp(`^${row.treeIndex}`)
+                continueTest = new RegExp(`^${row.treeFullIndex}`)
               }
 
             }
@@ -191,6 +208,27 @@
 
         this.columnExpandWidth = columnExpandWidthInit + (maxLevelShow * this.columnExpandIndent)
       },
+      toggleRowSelection(clickRow, selected) {
+        // 必须从上到下遍历，不然通过正则匹配处理子节点row的逻辑无法实现
+        for (let i = clickRow.rowIndex + 1, len = this.data.length; i < len; i++) {
+          const row = this.data[i];
+          if (new RegExp(`^${clickRow.treeFullIndex}`).test(row.treeFullIndex)) {
+            this.$refs.treeTable.toggleRowSelection(row, selected);
+          } else {
+            break;
+          }
+        }
+      },
+      handleSelect(selection, clickRow) {
+        // 如果为真则是勾选
+        // 否则是取消勾选
+        this.toggleRowSelection(clickRow, selection.some(row => row[this.uniqueKey] === clickRow[this.uniqueKey]))
+        this.$emit('select', selection, clickRow)
+      },
+      handleSelectionChange(val) {
+        this.multipleSelection = val;
+        this.$emit('selection-change', val)
+      }
     }
   };
 </script>

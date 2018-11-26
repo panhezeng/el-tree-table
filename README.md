@@ -15,10 +15,12 @@
    props: {
       // 数据的唯一标识key
       uniqueKey: {type: String, default: "id"},
+      // 获取树形数据的子节点的key
       treeChildrenKey: {type: String, default: "children"},
       // 树形数据结构，用来转换成表格数据
       treeData: {},
       // 表格数据结构，如果传了这个，就不用treeData了
+      // tableData的row数据对象必须有row.treeFullIndex，row.treeLevel, row.treeHasChildren属性，而且值必须正确有效
       tableData: {},
       // 是否展开所有
       expandAll: {
@@ -40,12 +42,24 @@
         type: Number,
         default: 20
       },
-      // 要渲染的列数据，没有则不渲染，使用者可以通过slot，自己实现
+      // 要渲染的列数据，没有则不渲染，开发者可以通过slot，自己实现
       columns: {
         type: Array,
         default() {
           return []
         }
+      },
+      expandIcon: {
+        type: String,
+        default: 'el-icon-caret-bottom'
+      },
+      collapseIcon: {
+        type: String,
+        default: 'el-icon-caret-right'
+      },
+      leafIcon: {
+        type: String,
+        default: 'el-icon-minus'
       }
     },
   }

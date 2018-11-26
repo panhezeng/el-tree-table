@@ -8,8 +8,8 @@
 
   // import '../../dist/el-tree-table.min.js'
   //  import Vue from 'vue'
-  //  import ElTreeTable from '../../dist/el-tree-table.min.js'
-   import ElTreeTable from '../../src/ElTreeTable.vue'
+   import ElTreeTable from '../../dist/el-tree-table.min.js'
+  //  import ElTreeTable from '../../src/ElTreeTable.vue'
   //  const ElTreeTable = require('../../dist/el-tree-table.min.js')
 
   //  Vue.use(ElTreeTable)
