@@ -159,33 +159,36 @@
       getRowStyle({row}) {
         return row.rowShow === false ? 'display:none;' : ''
       },
-      toggleExpand: function (row, index) {
-        row.treeExpand = !row.treeExpand;
+      toggleExpand: function (clickRow) {
+        clickRow.treeExpand = !clickRow.treeExpand;
+        let maxLevelShow = clickRow.treeLevel;
         let continueTest = null;
-        for (let i = index + 1, len = this.data.length; i < len; i++) {
-          const nextRow = this.data[i];
-          // 如果有跳过检查，并且下一行满足条件，则执行跳过
-          // 否则如果下一行是当前点击行的子节点
-          if (continueTest && continueTest.test(nextRow.treeIndex)) {
-            continue;
-          } else if (new RegExp(`^${row.treeIndex}`).test(nextRow.treeIndex)) {
-            continueTest = null;
-            // 如果当前点击是展开，并且下一行有子节点，而且是不展开，则它后面的子节点都跳过
-            if (row.treeExpand && nextRow.treeHasChildren && !nextRow.treeExpand) {
-              continueTest = new RegExp(`^${nextRow.treeIndex}`)
+        // 必须从上到下遍历，不然正则匹配跳过子节点逻辑无法实现
+        for (let i = 0, len = this.data.length; i < len; i++) {
+          const row = this.data[i];
+          // 如果遍历的行不是点击的行，则继续
+          if (row[this.uniqueKey] !== clickRow[this.uniqueKey]) {
+            // 如果有跳过检查，并且遍历的行满足条件，则执行跳过
+            // 否则如果遍历的行是当前点击行的子节点
+            if (continueTest && continueTest.test(row.treeIndex)) {
+              continue;
+            } else if (new RegExp(`^${clickRow.treeIndex}`).test(row.treeIndex)) {
+              row.rowShow = clickRow.treeExpand;
+
+              continueTest = null;
+              // 如果当前点击是展开，并且下一行有子节点，而且是不展开，则它后面的子节点都跳过
+              if (clickRow.treeExpand && row.treeHasChildren && !row.treeExpand) {
+                continueTest = new RegExp(`^${row.treeIndex}`)
+              }
+
             }
-            nextRow.rowShow = row.treeExpand;
-          } else {
-            break;
+            // 获得显示行的最大层级
+            if (row.rowShow && row.treeLevel > maxLevelShow) {
+              maxLevelShow = row.treeLevel;
+            }
           }
         }
 
-        let maxLevelShow = row.treeLevel;
-        this.data.forEach(item=>{
-          if (item.rowShow && item.treeLevel > maxLevelShow) {
-            maxLevelShow = item.treeLevel;
-          }
-        })
         this.columnExpandWidth = columnExpandWidthInit + (maxLevelShow * this.columnExpandIndent)
       },
     }
