@@ -21,6 +21,11 @@
     </el-table-column>
     <template v-if="columns.length">
       <el-table-column v-for="column in columns" :key="column.prop"
+                       :filtered-value="column.filteredValue||[]"
+                       :filter-method="column.filterMethod"
+                       :filter-multiple="column.filterMultiple"
+                       :filters="column.filters||[]"
+                       :column-key="column.prop"
                        :prop="column.prop"
                        :label="column.label"
                        :width="column.width"/>
