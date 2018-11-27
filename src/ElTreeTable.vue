@@ -2,7 +2,6 @@
   <el-table ref="treeTable" class="el-tree-table" :row-style="getRowStyle"
             :data="data"
             @select="handleSelect"
-            @selection-change="handleSelectionChange"
             v-bind="$attrs"
             v-on="$listeners">
     <el-table-column
@@ -63,6 +62,11 @@
         type: Number,
         default: 55
       },
+      // 选择父子关联
+      selectionRelate: {
+        type: Boolean,
+        default: true
+      },
       // 展开操作列
       columnExpand: {
         type: Boolean,
@@ -96,8 +100,7 @@
     data() {
       return {
         data: [],
-        columnExpandWidth: columnExpandWidthInit,
-        multipleSelection: []
+        columnExpandWidth: columnExpandWidthInit
       };
     },
     watch: {
@@ -225,14 +228,12 @@
         }
       },
       handleSelect(selection, clickRow) {
-        // 如果为真则是勾选
-        // 否则是取消勾选
-        this.toggleRowSelection(clickRow, selection.some(row => row[this.uniqueKey] === clickRow[this.uniqueKey]))
+        if(this.selectionRelate){
+          // 如果为真则是勾选
+          // 否则是取消勾选
+          this.toggleRowSelection(clickRow, selection.some(row => row[this.uniqueKey] === clickRow[this.uniqueKey]))
+        }
         this.$emit('select', selection, clickRow)
-      },
-      handleSelectionChange(val) {
-        this.multipleSelection = val;
-        this.$emit('selection-change', val)
       }
     }
   };
