@@ -44,7 +44,7 @@ export default {
     treeChildrenKey: { type: String, default: "children" },
     // 孩子数据数量的key，是否显示展开按钮，通过treeChildrenKey和treeChildrenCountKey一起判断，
     // 如果通过treeChildrenKey获得的数组为空，而通过treeChildrenCountKey获得为数量大于0，则也会显示展开按钮，结合toggle-expand事件可实现懒加载
-    // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandUniqueKeys，实现更新treeData后还原展开状态
+    // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandUniqueValues，实现更新treeData后还原展开状态
     treeChildrenCountKey: { type: String, default: "children_count" },
     // 树形数据结构，用来转换成表格数据
     treeData: {},
