@@ -13,8 +13,6 @@
 <script>
   export default {
   props: {
-    // 每行数据的唯一标识key
-    uniqueKey: { type: String, default: "id" },
     // 获取树形数据的子节点的key
     treeChildrenKey: { type: String, default: "children" },
     // 孩子数据数量的key，是否显示展开按钮，通过treeChildrenKey和treeChildrenCountKey一起判断，

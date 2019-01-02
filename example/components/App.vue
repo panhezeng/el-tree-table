@@ -104,19 +104,25 @@ export default {
     toggleExpand(row) {
       // 如果是展开，并且还没孩子节点数据，则加载
       if (row.treeExpand && !(row.children && row.children.length)) {
-        console.log(row, 11111);
+        this.$refs.treeTable.loadingFullIndex = row.treeFullIndex;
         setTimeout(() => {
           row.children = [
             {
               id: 12,
-              title: "标题1-3-1"
+              title: "标题1-3-1",
+              children: [
+                {
+                  id: 13,
+                  title: "标题1-3-1-1"
+                }
+              ]
             }
           ];
           this.expandUniqueValues = this.$refs.treeTable
             .getExpandRows()
-            .map(value => value.id)
-            .concat([12]);
+            .map(value => value.treeFullIndex);
           this.treeData = this.treeData.slice();
+          this.$refs.treeTable.loadingFullIndex = "";
         }, 1000);
       }
     }
