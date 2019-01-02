@@ -214,7 +214,7 @@ export default {
             Boolean(row[this.treeChildrenCountKey])
           );
           // 获得显示行的最大层级
-          if (level > maxLevelShow && treeExpand) {
+          if (level > maxLevelShow && show) {
             maxLevelShow = level;
             this.columnExpandWidth =
               columnExpandWidthInit + maxLevelShow * this.columnExpandIndent;
