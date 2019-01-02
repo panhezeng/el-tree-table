@@ -41,7 +41,7 @@
       type: Number,
       default: 55
     },
-    // 选择父子关联
+    // 勾选取消行的父子关联效果
     selectionRelate: {
       type: Boolean,
       default: true

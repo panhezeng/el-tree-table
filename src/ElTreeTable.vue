@@ -129,7 +129,9 @@ export default {
   methods: {
     // 是否显示加载中Icon
     loadingIcon(row) {
-      return this.loadingFullIndex && this.loadingFullIndex === row.treeFullIndex;
+      return (
+        this.loadingFullIndex && this.loadingFullIndex === row.treeFullIndex
+      );
     },
     // 是否展开
     expand(row) {
@@ -282,11 +284,7 @@ export default {
     // 切换勾选取消行
     toggleRowSelection(clickRow, selected) {
       // 必须从上到下遍历，不然通过正则匹配处理子节点row的逻辑无法实现
-      for (
-        let i = clickRow.rowIndex, len = this.data.length;
-        i < len;
-        i++
-      ) {
+      for (let i = clickRow.rowIndex, len = this.data.length; i < len; i++) {
         const row = this.data[i];
         if (new RegExp(`^${clickRow.treeFullIndex}`).test(row.treeFullIndex)) {
           this.$refs.treeTable.toggleRowSelection(row, selected);

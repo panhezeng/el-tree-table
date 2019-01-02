@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <el-tree-table ref="treeTable" :expand-unique-values="expandUniqueValues" :tree-data="treeData" :columns="columns" style="width: 100%" @init-data="initData" @toggle-expand="toggleExpand"/>
+    <el-tree-table ref="treeTable" :expand-unique-values="expandUniqueValues" :tree-data="treeData" :columns="columns" style="width: 100%" @init-data="initData" @toggle-expand="toggleExpand" @selection-change="handleSelectionChange"/>
   </div>
 </template>
 
@@ -94,12 +94,15 @@ export default {
     };
   },
   methods: {
+    handleSelectionChange(val) {
+      console.log(val)
+    },
     filterHandler(value, row, column) {
       const property = column["property"];
       return row[property] === value;
     },
     initData(data) {
-      this.tableData = data;
+      console.log(data)
     },
     toggleExpand(row) {
       // 如果是展开，并且还没孩子节点数据，则加载
