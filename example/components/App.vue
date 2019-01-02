@@ -107,6 +107,7 @@ export default {
     toggleExpand(row) {
       // 如果是展开，并且还没孩子节点数据，则加载
       if (row.treeExpand && !(row.children && row.children.length)) {
+        // 加载动画
         this.$refs.treeTable.loadingFullIndex = row.treeFullIndex;
         setTimeout(() => {
           row.children = [
@@ -124,7 +125,9 @@ export default {
           this.expandUniqueValues = this.$refs.treeTable
             .getExpandRows()
             .map(value => value.treeFullIndex);
+          // 触发重新渲染数据
           this.treeData = this.treeData.slice();
+          // 取消加载动画
           this.$refs.treeTable.loadingFullIndex = "";
         }, 1000);
       }
