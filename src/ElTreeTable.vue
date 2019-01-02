@@ -283,7 +283,7 @@ export default {
     toggleRowSelection(clickRow, selected) {
       // 必须从上到下遍历，不然通过正则匹配处理子节点row的逻辑无法实现
       for (
-        let i = clickRow.rowIndex + 1, len = this.data.length;
+        let i = clickRow.rowIndex, len = this.data.length;
         i < len;
         i++
       ) {
