@@ -63,6 +63,14 @@
         return [];
       }
     },
+    // 在某种多层slot嵌套下，直接使用slot，样式会出现异常，所有再提供customRender属性实现自定义渲染
+    // key为column.prop，value是一个返回html字符串的方法，方法传入一个参数scope
+    customRender: {
+      type: Object,
+      default() {
+        return {};
+      }
+    },
     expandIcon: {
       type: String,
       default: "el-icon-caret-bottom"
