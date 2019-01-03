@@ -1,6 +1,17 @@
 <template>
   <div id="app">
-    <el-tree-table ref="treeTable" :expand-unique-values="expandUniqueValues" :tree-data="treeData" :columns="columns" style="width: 100%" @init-data="initData" @toggle-expand="toggleExpand" @selection-change="handleSelectionChange"/>
+    <el-tree-table ref="treeTable" :expand-unique-values="expandUniqueValues" :tree-data="treeData" :columns="columns"
+                   :custom-render="customRender" style="width: 100%" @init-data="initData" @toggle-expand="toggleExpand"
+                   @selection-change="handleSelectionChange">
+      <el-table-column
+        label="slot用法"
+        width="100"
+      >
+        <template slot-scope="scope">
+          <span>{{ scope.row.title }}</span>
+        </template>
+      </el-table-column>
+    </el-tree-table>
   </div>
 </template>
 
@@ -37,6 +48,11 @@ export default {
           "filter-method": this.filterHandler
         }
       ],
+      customRender: {
+        id(scope) {
+          return `<span style="color: red">${scope.row.id}</span>`;
+        }
+      },
       expandUniqueValues: [],
       treeData: [
         {
@@ -95,14 +111,14 @@ export default {
   },
   methods: {
     handleSelectionChange(val) {
-      console.log(val)
+      console.log("handleSelectionChange", val);
     },
     filterHandler(value, row, column) {
       const property = column["property"];
       return row[property] === value;
     },
     initData(data) {
-      console.log(data)
+      console.log("initData", data);
     },
     toggleExpand(row) {
       // 如果是展开，并且还没孩子节点数据，则加载

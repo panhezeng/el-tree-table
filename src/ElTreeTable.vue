@@ -20,12 +20,21 @@
       </template>
     </el-table-column>
     <template v-if="columns.length">
-      <el-table-column v-for="column in columns" :key="column.prop"
-                       v-bind="column"/>
+      <template v-for="column in columns">
+        <el-table-column :key="column.prop"
+                         v-bind="column" v-if="customRender[column.prop]">
+
+          <template slot-scope="scope">
+            <span v-html="customRender[column.prop](scope)">
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column :key="column.prop"
+                         v-bind="column" v-else>
+        </el-table-column>
+      </template>
     </template>
     <slot/>
-
-
   </el-table>
 </template>
 <script>
@@ -87,6 +96,14 @@ export default {
       type: Array,
       default() {
         return [];
+      }
+    },
+    // 在某种多层slot嵌套下，直接使用slot，样式会出现异常，所有再提供customRender属性实现自定义渲染
+    // key为column.prop，value是一个返回html字符串的方法，方法传入一个参数scope
+    customRender: {
+      type: Object,
+      default() {
+        return {};
       }
     },
     expandIcon: {
