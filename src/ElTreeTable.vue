@@ -82,7 +82,7 @@ export default {
       type: Number,
       default: 20
     },
-    // 要渲染的列数据，没有则不渲染，开发者可以通过slot，自己实现
+    // 要渲染的列数据，每个对象一一对应el-table的Table-column Attributes，没有则不渲染，开发者可以通过slot，自己实现
     columns: {
       type: Array,
       default() {
