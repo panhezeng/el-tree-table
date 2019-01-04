@@ -4,6 +4,7 @@
             @select="handleSelect"
             v-bind="$attrs"
             v-on="$listeners">
+    <slot name="start"/>
     <el-table-column
       type="selection"
       :width="columnSelectionWidth" v-if="columnSelectionWidth"/>
@@ -19,6 +20,7 @@
         </div>
       </template>
     </el-table-column>
+    <slot/>
     <template v-if="columns.length">
       <template v-for="column in columns">
         <el-table-column :key="column.prop"
@@ -34,7 +36,7 @@
         </el-table-column>
       </template>
     </template>
-    <slot/>
+    <slot name="end"/>
   </el-table>
 </template>
 <script>
@@ -157,6 +159,18 @@ export default {
         this.expandUniqueValues.indexOf(row.treeFullIndex) !== -1
       );
     },
+    // 获得父级行
+    getParent(row) {
+      const treeFullIndex = String(row.treeFullIndex);
+      const parentFullIndex = treeFullIndex.replace(/-?\d$/, "");
+      if (parentFullIndex) {
+        return this.data.find(
+          iterateRow => String(iterateRow.treeFullIndex) === treeFullIndex
+        );
+      } else {
+        return this.treeData;
+      }
+    },
     // 获得所有展开的行
     getExpandRows() {
       if (
@@ -190,7 +204,6 @@ export default {
      * @param fullIndex 当前节点的完整索引，包括祖先节点的索引
      * @param level 当前递归的层级
      * @param maxLevelShow 显示的最大层级
-     * @param 父级数据
      * @return {Array}
      */
     treeToTableData(
@@ -210,15 +223,16 @@ export default {
           to.push(row);
           this.$set(row, "rowIndex", to.length);
           const treeExpand = this.expand(row);
-          // 第一层初始化
+          // 第一层级根节点的初始化
           if (level === 0) {
             fullIndex = "";
           } else {
-            // 如果是第二层以后非第一个元素，则需要去掉前一个兄弟元素
+            // 如果是子节点的非第一个元素，则需要去掉前一个兄弟元素的索引
             if (i) {
-              const fullIndexArray = String(fullIndex).split("-");
-              fullIndexArray.pop();
-              fullIndex = fullIndexArray.join("-") + "-";
+              // const fullIndexArray = String(fullIndex).split("-");
+              // fullIndexArray.pop();
+              // fullIndex = fullIndexArray.join("-") + "-";
+              fullIndex = String(fullIndex).replace(/\d$/, "");
             }
           }
           // 节点的唯一标识

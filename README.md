@@ -63,7 +63,7 @@
         return [];
       }
     },
-    // 在某种多层slot嵌套下，直接使用slot，样式会出现异常，所有再提供customRender属性实现自定义渲染
+    // 在某种多层slot嵌套下，直接使用slot，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供customRender属性实现自定义渲染
     // key为column.prop，value是一个返回html字符串的方法，方法传入一个参数scope
     customRender: {
       type: Object,

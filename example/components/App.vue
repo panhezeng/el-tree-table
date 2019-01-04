@@ -121,6 +121,7 @@ export default {
       console.log("initData", data);
     },
     toggleExpand(row) {
+      console.log("getParent", this.$refs.treeTable.getParent(row));
       // 如果是展开，并且还没孩子节点数据，则加载
       if (row.treeExpand && !(row.children && row.children.length)) {
         // 加载动画
