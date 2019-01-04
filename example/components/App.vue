@@ -112,6 +112,12 @@ export default {
   methods: {
     handleSelectionChange(val) {
       console.log("handleSelectionChange", val);
+      if (val && val.length) {
+        console.log(
+          "handleSelectionChange P",
+          this.$refs.treeTable.getParent(val[0])
+        );
+      }
     },
     filterHandler(value, row, column) {
       const property = column["property"];

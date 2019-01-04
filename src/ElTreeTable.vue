@@ -165,7 +165,7 @@ export default {
       const parentFullIndex = treeFullIndex.replace(/-?\d$/, "");
       if (parentFullIndex) {
         return this.data.find(
-          iterateRow => String(iterateRow.treeFullIndex) === treeFullIndex
+          iterateRow => String(iterateRow.treeFullIndex) === parentFullIndex
         );
       } else {
         return this.treeData;
