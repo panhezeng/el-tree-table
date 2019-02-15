@@ -1,7 +1,7 @@
 {
   "name": "@panhezeng/el-tree-table",
   "description": "A Vue component",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "潘何增 <panhezeng@gmail.com> (http://apsay.com/)",
   "license": "MIT",
   "private": false,
