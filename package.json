@@ -1,7 +1,7 @@
 {
   "name": "@panhezeng/el-tree-table",
   "description": "A Vue component",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "author": "潘何增 <panhezeng@gmail.com> (http://apsay.com/)",
   "license": "MIT",
   "private": false,
@@ -30,26 +30,47 @@
     "build:example": "webpack --mode production --config webpack.example.config.js",
     "build": "webpack --mode production"
   },
-  "dependencies": {
-    "element-ui": "latest",
-    "vue": "latest"
+  "peerDependencies": {
+    "vue": "~2",
+    "element-ui": "~2"
   },
+  "dependencies": {},
   "devDependencies": {
-    "@panhezeng/before-run-webpack-plugin": "latest",
-    "babel-loader": "latest",
-    "@babel/core": "latest",
-    "@babel/plugin-syntax-dynamic-import": "latest",
-    "@babel/plugin-transform-runtime": "latest",
-    "@babel/preset-env": "latest",
-    "css-loader": "latest",
-    "file-loader": "^1.1.4",
-    "url-loader": "^1.0.1",
-    "vue-loader": "latest",
-    "vue-style-loader": "latest",
-    "vue-template-compiler": "latest",
-    "webpack": "latest",
-    "webpack-cli": "latest",
-    "webpack-dev-server": "latest"
+    "husky": "^1.3.1",
+    "lint-staged": "^8.1.3",
+    "prettier": "^1.16.4",
+    "@panhezeng/ucloud-ufile": "~1",
+    "element-ui": "~2",
+    "vue": "~2",
+    "@babel/core": "~7",
+    "@babel/plugin-syntax-dynamic-import": "~7",
+    "@babel/plugin-transform-runtime": "~7",
+    "@babel/preset-env": "~7",
+    "@babel/runtime": "~7",
+    "@panhezeng/before-run-webpack-plugin": "~1",
+    "babel-loader": "~8",
+    "css-loader": "~2",
+    "vue-loader": "~15",
+    "vue-template-compiler": "~2",
+    "webpack": "~4",
+    "webpack-cli": "~3",
+    "webpack-dev-server": "^3.1.14",
+    "file-loader": "~3",
+    "less": "~3",
+    "less-loader": "~4",
+    "url-loader": "~1",
+    "vue-style-loader": "~4"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,json,css,md,jsx,vue,ts,less}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "engines": {
     "node": ">= 10.0.0",

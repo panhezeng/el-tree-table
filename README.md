@@ -8,10 +8,9 @@
 
 ## 说明
 
-
 ```vue
 <script>
-  export default {
+export default {
   props: {
     // 获取树形数据的子节点的key
     treeChildrenKey: { type: String, default: "children" },
@@ -63,7 +62,7 @@
         return [];
       }
     },
-    // 在某种多层slot嵌套下，直接使用slot，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供customRender属性实现自定义渲染
+    // 在某种多层slot嵌套下，直接使用slot，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所以再提供customRender属性实现自定义渲染
     // key为column.prop，value是一个返回html字符串的方法，方法传入一个参数scope
     customRender: {
       type: Object,
@@ -83,8 +82,8 @@
       type: String,
       default: "el-icon-minus"
     }
-  },
   }
+};
 </script>
 ```
 
@@ -95,43 +94,49 @@
 `npm i vue element-ui @panhezeng/el-tree-table -S`
 
 #### 异步
+
 ```vue
 <script>
-  const ElTreeTable = () => import('@panhezeng/el-tree-table')
- 
-   export default {
-     components: {ElTreeTable}
-   }
+const ElTreeTable = () => import("@panhezeng/el-tree-table");
+
+export default {
+  components: { ElTreeTable }
+};
 </script>
 ```
 
 #### 同步
 
 ##### export default components
+
 ```vue
 <script>
-    import ElTreeTable from '@panhezeng/el-tree-table'
+import ElTreeTable from "@panhezeng/el-tree-table";
 
-    export default {
-      components: {ElTreeTable}
-    }
+export default {
+  components: { ElTreeTable }
+};
 </script>
 ```
 
 ##### Vue.use
+
 ```vue
 <script>
-    import Vue from 'vue'
-    import ElTreeTable from '@panhezeng/el-tree-table'
+import Vue from "vue";
+import ElTreeTable from "@panhezeng/el-tree-table";
 
-    Vue.use(ElTreeTable)
+Vue.use(ElTreeTable);
 </script>
 ```
 
 ### external vue element-ui 方式
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@latest/lib/theme-chalk/index.css">
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/element-ui@latest/lib/theme-chalk/index.css"
+/>
 <script src="https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-ui@latest/lib/index.js"></script>
 ```
@@ -140,9 +145,11 @@
 
 ```javascript
 // auto install
-import '@panhezeng/el-tree-table'
+import "@panhezeng/el-tree-table";
 ```
-or 
+
+or
+
 ```html
 <!--auto install-->
 <script src="https://cdn.jsdelivr.net/npm/@panhezeng/el-tree-table@latest/dist/el-tree-table.min.js"></script>
@@ -150,7 +157,7 @@ or
 
 ## 编译
 
-``` bash
+```bash
 # install dependencies
 npm install
 
@@ -164,4 +171,3 @@ npm run build
 npm version patch && npm publish --access public
 
 ```
-
