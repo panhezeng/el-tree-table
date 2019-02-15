@@ -9,19 +9,17 @@ module.exports = {
     libraryExport: "ElTreeTable"
   },
   externals: {
-    externals: {
-      vue: {
-        commonjs: "vue",
-        commonjs2: "vue",
-        amd: "vue",
-        root: "Vue"
-      },
-      "element-ui": {
-        commonjs: "element-ui",
-        commonjs2: "element-ui",
-        amd: "element-ui",
-        root: "ELEMENT"
-      }
+    vue: {
+      commonjs: "vue",
+      commonjs2: "vue",
+      amd: "vue",
+      root: "Vue"
+    },
+    "element-ui": {
+      commonjs: "element-ui",
+      commonjs2: "element-ui",
+      amd: "element-ui",
+      root: "ELEMENT"
     }
   },
   module: {

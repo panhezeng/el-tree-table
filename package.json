@@ -67,9 +67,15 @@
     }
   },
   "lint-staged": {
-    "*.{js,json,css,md,jsx,vue,ts,less}": [
-      "prettier --write",
-      "git add"
+    "linters": {
+      "*.{js,json,css,md,jsx,vue,ts,less}": [
+        "prettier --write",
+        "git add"
+      ]
+    },
+    "ignore": [
+      "**/dist/**",
+      "**/docs/**"
     ]
   },
   "engines": {
