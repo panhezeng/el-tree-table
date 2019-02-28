@@ -1,42 +1,73 @@
 <template>
-  <el-table ref="treeTable" class="el-tree-table" :row-style="getRowStyle"
-            :data="data"
-            @select="handleSelect"
-            v-bind="$attrs"
-            v-on="$listeners">
-    <slot name="start"/>
+  <el-table
+    ref="treeTable"
+    class="el-tree-table"
+    :row-style="getRowStyle"
+    :data="data"
+    @select="handleSelect"
+    v-bind="$attrs"
+    v-on="$listeners"
+  >
+    <slot name="start" />
     <el-table-column
       type="selection"
-      :width="columnSelectionWidth" v-if="columnSelectionWidth"/>
-    <el-table-column :width="columnExpandWidth" column-key="columnExpand" v-if="columnExpand">
-      <template slot-scope="scope">
-        <div :style="`margin-left: ${scope.row.treeLevel * columnExpandIndent}px;`">
-          <span v-if="loadingIcon(scope.row)"><i class="el-icon-loading"/></span>
-          <span @click="toggleExpand(scope.row,scope.$index)" v-else-if="scope.row.treeHasChildren">
-            <i v-if="scope.row.treeExpand" :class="expandIcon"/>
-            <i v-else :class="collapseIcon"/>
+      :width="columnSelectionWidth"
+      v-if="columnSelectionWidth"
+    />
+    <el-table-column
+      :width="columnExpandWidth"
+      column-key="columnExpand"
+      v-if="columnExpand"
+    >
+      <template v-slot:default="scope">
+        <div
+          :style="`margin-left: ${scope.row.treeLevel * columnExpandIndent}px;`"
+        >
+          <span v-if="loadingIcon(scope.row)"
+            ><i class="el-icon-loading"
+          /></span>
+          <span
+            @click="toggleExpand(scope.row, scope.$index)"
+            v-else-if="scope.row.treeHasChildren"
+          >
+            <i v-if="scope.row.treeExpand" :class="expandIcon" />
+            <i v-else :class="collapseIcon" />
           </span>
           <span v-else><i :class="leafIcon"/></span>
         </div>
       </template>
     </el-table-column>
-    <slot/>
+    <slot />
     <template v-if="columns.length">
       <template v-for="column in columns">
-        <el-table-column :key="column.prop"
-                         v-bind="column" v-if="customRender[column.prop]">
-
-          <template slot-scope="scope">
-            <span v-html="customRender[column.prop](scope)">
-            </span>
+        <el-table-column
+          :key="column.prop"
+          v-bind="column"
+          v-if="customRender.html && customRender.html[column.prop]"
+        >
+          <template v-slot:default="scope">
+            <span v-html="customRender.html[column.prop](scope)"> </span>
           </template>
         </el-table-column>
-        <el-table-column :key="column.prop"
-                         v-bind="column" v-else>
+        <el-table-column :key="column.prop" v-bind="column" v-else>
+          <template v-slot:default="scope">
+            <template v-if="scope.row[column.prop]">{{
+              scope.row[column.prop]
+            }}</template>
+            <div v-if="customRender.btn && customRender.btn[column.prop]">
+              <el-button
+                v-for="(item, index) in customRender.btn[column.prop]"
+                :key="index"
+                v-bind="item.props"
+                @click="item.clickHandler(scope)"
+                >{{ item.label }}</el-button
+              >
+            </div>
+          </template>
         </el-table-column>
       </template>
     </template>
-    <slot name="end"/>
+    <slot name="end" />
   </el-table>
 </template>
 <script>
@@ -93,7 +124,7 @@ export default {
       type: Number,
       default: 20
     },
-    // 要渲染的列数据，每个对象一一对应el-table的Table-column Attributes，没有则不渲染，开发者可以通过slot，自己实现
+    // 要渲染的列数据，每个对象一一对应el-table的Table-column Attributes，没有则不渲染，开发者可以通过slot自己实现，有三个slot <slot name="start"/> <slot/> <slot name="end"/>
     columns: {
       type: Array,
       default() {
@@ -101,11 +132,15 @@ export default {
       }
     },
     // 在某种多层slot嵌套下，直接使用slot，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供customRender属性实现自定义渲染
-    // key为column.prop，value是一个返回html字符串的方法，方法传入一个参数scope
+    // html属性对象的key为column.prop，value是函数 Function ，参数 el table column scope ，返回html字符串，
+    // btn属性对象的key为column.prop，value是数组 []，数组项是对象 { props (按钮组件所有Attributes), label (按钮显示文字),  clickHandler (点击事件处理函数，参数el table column scope) }
     customRender: {
       type: Object,
       default() {
-        return {};
+        return {
+          html: {},
+          btn: {}
+        };
       }
     },
     expandIcon: {
@@ -128,7 +163,8 @@ export default {
       // 展开列的宽度
       columnExpandWidth: columnExpandWidthInit,
       // 加载中节点的唯一索引
-      loadingFullIndex: ""
+      loadingFullIndex: "",
+      click: "click"
     };
   },
   watch: {

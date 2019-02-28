@@ -1,13 +1,18 @@
 <template>
   <div id="app">
-    <el-tree-table ref="treeTable" :expand-unique-values="expandUniqueValues" :tree-data="treeData" :columns="columns"
-                   :custom-render="customRender" style="width: 100%" @init-data="initData" @toggle-expand="toggleExpand"
-                   @selection-change="handleSelectionChange">
-      <el-table-column
-        label="slot用法"
-        width="100"
-      >
-        <template slot-scope="scope">
+    <el-tree-table
+      ref="treeTable"
+      :expand-unique-values="expandUniqueValues"
+      :tree-data="treeData"
+      :columns="columns"
+      :custom-render="customRender"
+      style="width: 100%"
+      @init-data="initData"
+      @toggle-expand="toggleExpand"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column label="slot用法" width="100">
+        <template v-slot:default="scope">
           <span>{{ scope.row.title }}</span>
         </template>
       </el-table-column>
@@ -46,11 +51,29 @@ export default {
             { text: "标题1-2-2", value: "标题1-2-2" }
           ],
           "filter-method": this.filterHandler
+        },
+        {
+          prop: "action",
+          label: "操作",
+          width: 150
         }
       ],
       customRender: {
-        id(scope) {
-          return `<span style="color: red">${scope.row.id}</span>`;
+        html: {
+          id(scope) {
+            return `<span style="color: red">${scope.row.id}</span>`;
+          }
+        },
+        btn: {
+          action: [
+            {
+              label: "删除",
+              props: { size: "mini", type: "primary" },
+              clickHandler(scope) {
+                console.log(scope.row.id);
+              }
+            }
+          ]
         }
       },
       expandUniqueValues: [],
