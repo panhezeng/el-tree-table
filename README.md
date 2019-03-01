@@ -62,16 +62,12 @@ export default {
         return [];
       }
     },
-    // 在某种多层slot嵌套下，直接使用slot，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供customRender属性实现自定义渲染
-    // html属性对象的key为column.prop，value是函数 Function ，参数 el table column scope ，返回html字符串，
-    // btn属性对象的key为column.prop，value是数组 []，数组项是对象 { props (按钮组件所有Attributes), label (按钮显示文字),  clickHandler (点击事件处理函数，参数el table column scope) }
-    customRender: {
+    // 在某种复杂场景中，父组件通过slot传入el-table-column，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供components属性实现动态组件渲染
+    // 对象的key为column.prop，value是vue组件对象
+    components: {
       type: Object,
       default() {
-        return {
-          html: {},
-          btn: {}
-        };
+        return {};
       }
     },
     expandIcon: {
@@ -86,7 +82,7 @@ export default {
       type: String,
       default: "el-icon-minus"
     }
-  }
+  },
 </script>
 ```
 

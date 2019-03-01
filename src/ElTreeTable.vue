@@ -40,29 +40,16 @@
     <slot />
     <template v-if="columns.length">
       <template v-for="column in columns">
-        <el-table-column
-          :key="column.prop"
-          v-bind="column"
-          v-if="customRender.html && customRender.html[column.prop]"
-        >
-          <template v-slot:default="scope">
-            <span v-html="customRender.html[column.prop](scope)"> </span>
-          </template>
-        </el-table-column>
-        <el-table-column :key="column.prop" v-bind="column" v-else>
-          <template v-slot:default="scope">
+        <el-table-column :key="column.prop" v-bind="column">
+          <template v-slot="scope">
             <template v-if="scope.row[column.prop]">{{
               scope.row[column.prop]
             }}</template>
-            <div v-if="customRender.btn && customRender.btn[column.prop]">
-              <el-button
-                v-for="(item, index) in customRender.btn[column.prop]"
-                :key="index"
-                v-bind="item.props"
-                @click="item.clickHandler(scope)"
-                >{{ item.label }}</el-button
-              >
-            </div>
+            <component
+              :is="components[column.prop]"
+              :data="scope"
+              v-if="components[column.prop]"
+            />
           </template>
         </el-table-column>
       </template>
@@ -131,16 +118,12 @@ export default {
         return [];
       }
     },
-    // 在某种多层slot嵌套下，直接使用slot，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供customRender属性实现自定义渲染
-    // html属性对象的key为column.prop，value是函数 Function ，参数 el table column scope ，返回html字符串，
-    // btn属性对象的key为column.prop，value是数组 []，数组项是对象 { props (按钮组件所有Attributes), label (按钮显示文字),  clickHandler (点击事件处理函数，参数el table column scope) }
-    customRender: {
+    // 在某种复杂场景中，父组件通过slot传入el-table-column，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供components属性实现动态组件渲染
+    // 对象的key为column.prop，value是vue组件对象
+    components: {
       type: Object,
       default() {
-        return {
-          html: {},
-          btn: {}
-        };
+        return {};
       }
     },
     expandIcon: {

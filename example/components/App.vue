@@ -5,14 +5,14 @@
       :expand-unique-values="expandUniqueValues"
       :tree-data="treeData"
       :columns="columns"
-      :custom-render="customRender"
+      :components="components"
       style="width: 100%"
       @init-data="initData"
       @toggle-expand="toggleExpand"
       @selection-change="handleSelectionChange"
     >
       <el-table-column label="slot用法" width="100">
-        <template v-slot:default="scope">
+        <template v-slot="scope">
           <span>{{ scope.row.title }}</span>
         </template>
       </el-table-column>
@@ -58,22 +58,26 @@ export default {
           width: 150
         }
       ],
-      customRender: {
-        html: {
-          id(scope) {
-            return `<span style="color: red">${scope.row.id}</span>`;
-          }
-        },
-        btn: {
-          action: [
-            {
-              label: "删除",
-              props: { size: "mini", type: "primary" },
-              clickHandler(scope) {
-                console.log(scope.row.id);
+      components: {
+        action: {
+          props: {
+            data: {
+              type: Object,
+              default() {
+                return {};
               }
             }
-          ]
+          },
+          methods: {
+            clickHandler() {
+              console.log(this.data);
+            }
+          },
+          template: `
+                      <div>
+                        <el-button @click="clickHandler">删除</el-button>
+                      </div>
+                      `
         }
       },
       expandUniqueValues: [],
