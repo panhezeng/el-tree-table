@@ -5,7 +5,7 @@
       :expand-unique-values="expandUniqueValues"
       :tree-data="treeData"
       :columns="columns"
-      :components="components"
+      :column-custom-render="columnCustomRender"
       style="width: 100%"
       @init-data="initData"
       @toggle-expand="toggleExpand"
@@ -30,6 +30,9 @@ import ElTreeTable from "../../src/ElTreeTable.vue";
 //  Vue.use(ElTreeTable)
 
 //  const ElTreeTable = () => import('../../dist/el-tree-table.min.js')
+
+const test1 = 1;
+const test2 = 2;
 
 export default {
   name: "App",
@@ -58,26 +61,34 @@ export default {
           width: 150
         }
       ],
-      components: {
+      columnCustomRender: {
         action: {
           props: {
-            data: {
-              type: Object,
-              default() {
-                return {};
+            cellData: { invalidData: true },
+            test1,
+            test2
+          },
+          component: {
+            props: {
+              cellData: {
+                type: Object,
+                default() {
+                  return {};
+                }
+              },
+              test2: Number
+            },
+            methods: {
+              clickHandler() {
+                console.log(this.cellData, this.$attrs["test1"], this.test2);
               }
-            }
-          },
-          methods: {
-            clickHandler() {
-              console.log(this.data);
-            }
-          },
-          template: `
+            },
+            template: `
                       <div>
                         <el-button @click="clickHandler">删除</el-button>
                       </div>
                       `
+          }
         }
       },
       expandUniqueValues: [],
