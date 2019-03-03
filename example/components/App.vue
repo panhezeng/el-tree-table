@@ -34,6 +34,14 @@ import ElTreeTable from "../../src/ElTreeTable.vue";
 const test1 = 1;
 const test2 = 2;
 
+const TestComp = {
+  template: `
+            <div>
+              <slot/>
+            </div>
+            `
+};
+
 export default {
   name: "App",
   components: { ElTreeTable },
@@ -69,6 +77,7 @@ export default {
             test2
           },
           component: {
+            components: { TestComp },
             props: {
               cellData: {
                 type: Object,
@@ -84,9 +93,9 @@ export default {
               }
             },
             template: `
-                      <div>
+                      <test-comp>
                         <el-button @click="clickHandler">删除</el-button>
-                      </div>
+                      </test-comp>
                       `
           }
         }
