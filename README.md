@@ -62,9 +62,9 @@ export default {
         return [];
       }
     },
-    // 在某种复杂场景中，父组件通过slot传入el-table-column，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供components属性实现动态组件渲染
-    // 对象的key为column.prop，value是vue组件对象
-    components: {
+    // 在某种复杂场景中，父组件通过slot传入el-table-column，会出现异常，类似Duplicate keys el-table_1_column_1的Vue warn，并且样式错乱，所有再提供columnCustomRender属性实现动态组件渲染
+    // 对象的key为column.prop，value是对象 { props(传递给动态组件的数据，cellData属性已占用，外部传入也会覆盖为表格当前格所在行列的数据对象), component(vue组件对象) }
+    columnCustomRender: {
       type: Object,
       default() {
         return {};
