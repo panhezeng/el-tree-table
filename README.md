@@ -169,6 +169,6 @@ npm run dev:example
 npm run build
 
 # 发版
-npm version patch && npm publish --access public
+npm set @panhezeng:registry https://registry.npmjs.org/ && npm version patch && npm publish --access public && npm set @panhezeng:registry https://registry.npm.taobao.org/
 
 ```
