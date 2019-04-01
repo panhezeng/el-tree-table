@@ -4,8 +4,8 @@
     class="el-tree-table"
     :row-style="getRowStyle"
     :data="data"
-    @select="handleSelect"
     v-bind="$attrs"
+    @select="handleSelect"
     v-on="$listeners"
   >
     <slot name="start" />
@@ -19,7 +19,7 @@
       column-key="columnExpand"
       v-if="columnExpand"
     >
-      <template v-slot:default="scope">
+      <template v-slot="scope">
         <div
           :style="`margin-left: ${scope.row.treeLevel * columnExpandIndent}px;`"
         >
@@ -194,7 +194,7 @@ export default {
           iterateRow => String(iterateRow.treeFullIndex) === parentFullIndex
         );
       } else {
-        return this.treeData;
+        return this.data;
       }
     },
     // 获得所有展开的行
@@ -245,7 +245,12 @@ export default {
         from.length
       ) {
         for (let i = 0, len = from.length; i < len; i++) {
-          const row = from[i];
+          const fromRow = from[i];
+          const row = JSON.parse(JSON.stringify(fromRow));
+          // 禁止element table原生的tree table功能
+          row.hasChildren = false;
+          delete row[this.treeChildrenKey];
+          // 禁止element table 原生 tree table 功能
           to.push(row);
           this.$set(row, "rowIndex", to.length);
           const treeExpand = this.expand(row);
@@ -270,7 +275,7 @@ export default {
           this.$set(
             row,
             "treeHasChildren",
-            Boolean(row[this.treeChildrenCountKey])
+            Boolean(fromRow[this.treeChildrenCountKey])
           );
           // 获得显示行的最大层级
           if (level > maxLevelShow && show) {
@@ -278,7 +283,7 @@ export default {
             this.columnExpandWidth =
               columnExpandWidthInit + maxLevelShow * this.columnExpandIndent;
           }
-          const children = row[this.treeChildrenKey];
+          const children = fromRow[this.treeChildrenKey];
           if (
             Object.prototype.toString.call(children) === "[object Array]" &&
             children.length

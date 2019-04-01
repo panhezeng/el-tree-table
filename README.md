@@ -1,5 +1,7 @@
 # el-tree-table
 
+# 注意！！！！！！！！！！！ 官方 element table 已经实现了 tree table 功能，请优先使用官方实现
+
 ## 示例
 
 [点击预览](https://panhezeng.github.io/el-tree-table/)
