@@ -195,7 +195,8 @@ export default {
     initData(data) {
       console.log("initData", data);
     },
-    async loadChildren() {
+    async loadChildren(row) {
+      console.log(row);
       const getData = () => {
         return new Promise(function(resolve) {
           setTimeout(function() {
