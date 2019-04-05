@@ -23,8 +23,8 @@
 <script>
 // import '../../dist/el-tree-table.min.js'
 //  import Vue from 'vue'
-import ElTreeTable from "../../dist/el-tree-table.min.js";
-// import ElTreeTable from "../../src/ElTreeTable.vue";
+// import ElTreeTable from "../../dist/el-tree-table.min.js";
+import ElTreeTable from "../../src/ElTreeTable.vue";
 //  const ElTreeTable = require('../../dist/el-tree-table.min.js')
 
 //  Vue.use(ElTreeTable)
@@ -74,7 +74,8 @@ export default {
           props: {
             cellData: { invalidData: true },
             test1,
-            test2
+            test2,
+            vm: this
           },
           component: {
             components: { TestComp },
@@ -85,17 +86,36 @@ export default {
                   return {};
                 }
               },
+              vm: {
+                type: Object,
+                default() {
+                  return {};
+                }
+              },
               test2: Number
             },
             methods: {
-              clickHandler() {
-                console.log(this.cellData, this.$attrs["test1"], this.test2);
-                this.$emit("del", this.cellData.row);
+              delHandler() {
+                console.log(
+                  this.cellData,
+                  this.vm,
+                  this.$attrs["test1"],
+                  this.test2
+                );
+                this.vm.$refs.treeTable.delRow(this.cellData.row);
+              },
+              copyHandler() {
+                this.vm.$refs.treeTable.addTreeSibling(
+                  this.cellData.row,
+                  [this.cellData.row],
+                  0
+                );
               }
             },
             template: `
                       <test-comp>
-                        <el-button @click="clickHandler">删除</el-button>
+                        <el-button @click="delHandler">删除</el-button>
+                        <el-button @click="copyHandler">复制</el-button>
                       </test-comp>
                       `
           }

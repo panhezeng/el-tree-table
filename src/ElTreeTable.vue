@@ -62,7 +62,6 @@
                   cellData: scope
                 })
               "
-              @del="delRow"
             />
           </template>
         </el-table-column>
@@ -89,10 +88,12 @@ export default {
     // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandIndexes，实现更新treeData后还原展开状态
     treeChildrenLazyKey: { type: String, default: "lazy" },
     // 树形数据结构，用来转换成表格数据
-    treeData: {},
-    // 表格数据结构，如果传了这个，就不用treeData了
-    // tableData的row数据对象必须有row.treeFullIndex，row.treeLevel, row.treeHasChildren属性，而且值必须正确有效
-    tableData: {},
+    treeData: {
+      type: Array,
+      default() {
+        return [];
+      }
+    },
     // 是否展开所有
     expandAll: {
       type: Boolean,
@@ -155,41 +156,29 @@ export default {
   },
   data() {
     return {
+      // key是treeData转换为tableData的treeFullIndex，值是treeFullIndex对应的treeData原对象，用于通过转换后的数据的treeFullIndex，查找到转换前的对应数据
+      mapData: {},
       // 表格渲染数据
       data: [],
       // 最大显示层级
       maxLevelShow: 0,
       // 展开列的宽度
       columnExpandWidth: columnExpandWidthInit,
-      // 加载中节点的唯一索引
-      loadingFullIndex: "",
-      click: "click",
-      // key是treeData转换为tableData的treeFullIndex，值是treeFullIndex对应的treeData原对象，用于通过转换后的数据的treeFullIndex，查找到转换前的对应数据
-      mapData: {}
+      click: "click"
     };
   },
   watch: {
     treeData: {
       handler() {
-        if (
-          Object.prototype.toString.call(this.treeData) === "[object Array]" &&
-          this.treeData.length
-        ) {
-          this.initDataByTreeData(this.treeData);
-          this.$emit("init-data", this.data);
+        this.mapData = [];
+        this.data = [];
+        this.maxLevelShow = 0;
+        if (this.treeData.length) {
+          const result = this.treeToTableData(this.treeData, true);
+          this.maxLevelShow = result.maxLevelShow;
+          this.data = result.rows;
         }
-      },
-      immediate: true
-    },
-    tableData: {
-      handler() {
-        if (
-          Object.prototype.toString.call(this.tableData) === "[object Array]" &&
-          this.tableData.length
-        ) {
-          this.data = this.tableData;
-          this.$emit("init-data", this.data);
-        }
+        this.$emit("init-data", this.data);
       },
       immediate: true
     }
@@ -237,10 +226,9 @@ export default {
       }
       return [];
     },
-    initDataByTreeData(treeData) {
-      const result = this.treeToTableData(treeData, true);
-      this.maxLevelShow = result.maxLevelShow;
-      this.data = result.rows;
+    // 获得行对应的原节点数据
+    getSrcNode(row) {
+      return this.mapData[String(row.treeFullIndex)];
     },
     /**
      * 把树形嵌套数据结构转换为表格并列数据结构，并且增加属性标识每条数据对象之间的树形关系
@@ -264,6 +252,7 @@ export default {
       ) {
         for (let i = 0, len = src.length; i < len; i++) {
           const srcNode = src[i];
+          delete srcNode.tableRowData;
           // 克隆，不改变原数据
           const row = JSON.parse(JSON.stringify(srcNode));
           srcNode.tableRowData = row;
@@ -323,12 +312,68 @@ export default {
       }
       return result;
     },
+    delRow(delRow) {
+      const delRowTreeFullIndex = String(delRow.treeFullIndex);
+      const index = this.getRowIndex(delRow);
+      let count = 1;
+      // 如果删除行有子孙行，则一起删除
+      if (delRow.treeHasChildren) {
+        for (let i = index + 1, len = this.data.length; i < len; i++) {
+          const row = this.data[i];
+          if (parseInt(row.treeLevel) <= parseInt(delRow.treeLevel)) {
+            break;
+          }
+          count++;
+        }
+      }
+
+      // 如果删除行的父级只有此行，删除后改变父级状态，并且清理原数据
+      const parentRow = this.getParent(delRow);
+      if (parentRow) {
+        const parentRowSrcNode = this.getSrcNode(parentRow);
+        const srcNodeChildren = parentRowSrcNode[this.treeChildrenKey];
+        let treeHasChildren = srcNodeChildren.length > 1;
+        if (treeHasChildren) {
+          const delSrcNodeIndex = srcNodeChildren.findIndex(
+            srcNode =>
+              String(srcNode.tableRowData.treeFullIndex) === delRowTreeFullIndex
+          );
+          srcNodeChildren.splice(delSrcNodeIndex, 1);
+          treeHasChildren = srcNodeChildren.length > 1;
+        }
+        if (!treeHasChildren) delete parentRowSrcNode[this.treeChildrenKey];
+        this.$set(parentRow, "treeHasChildren", treeHasChildren);
+
+        delete this.mapData[delRowTreeFullIndex];
+
+        this.data.splice(index, count);
+      } else {
+        // 修改treeData，触发 treeData watch
+        this.treeData.splice(
+          this.treeData.findIndex(
+            srcNode =>
+              String(srcNode.tableRowData.treeFullIndex) === delRowTreeFullIndex
+          ),
+          1
+        );
+      }
+    },
+    /**
+     * 会先清空原所有子孙节点
+     * @param parentRow 父行
+     * @param children 子数组
+     */
     addTreeChildren(parentRow, children) {
-      const treeFullIndex = String(parentRow.treeFullIndex);
       delete parentRow[this.treeChildrenLazyKey];
-      const srcData = this.mapData[String(treeFullIndex)];
-      delete srcData[this.treeChildrenLazyKey];
-      srcData[this.treeChildrenKey] = children;
+      const srcNode = this.getSrcNode(parentRow);
+      delete srcNode[this.treeChildrenLazyKey];
+      const oldChildren = srcNode[this.treeChildrenKey];
+      if (Object.prototype.toString.call(oldChildren) === "[object Array]") {
+        for (let i = oldChildren.length; i--; ) {
+          this.delRow(oldChildren[i].tableRowData);
+        }
+      }
+      srcNode[this.treeChildrenKey] = children;
       this.$set(parentRow, "treeHasChildren", true);
       const result = this.treeToTableData(
         children,
@@ -342,14 +387,38 @@ export default {
       this.data.splice(index + 1, 0, ...result.rows);
       this.setTreeChildrenLoading(parentRow, false);
     },
+    /**
+     *
+     * @param row 当前行
+     * @param sibling 兄弟数组
+     * @param index 插入索引位置，加在最后
+     */
+    addTreeSibling(row, sibling, index) {
+      const parentRow = this.getParent(row);
+      if (parentRow) {
+        const parentRowSrcNode = this.getSrcNode(parentRow);
+        const srcNodeChildren = parentRowSrcNode[this.treeChildrenKey].slice();
+        if (Object.prototype.toString.call(index) !== "[object Number]") {
+          index = srcNodeChildren.length;
+        }
+        srcNodeChildren.splice(index, 0, ...sibling);
+        this.addTreeChildren(parentRow, srcNodeChildren);
+      } else {
+        // 修改treeData，触发 treeData watch
+        if (Object.prototype.toString.call(index) !== "[object Number]") {
+          index = this.treeData.length;
+        }
+        this.treeData.splice(index, 0, ...sibling);
+      }
+    },
     // 切换展开和收起行
     toggleExpand(clickRow) {
       this.$set(clickRow, "treeExpand", !clickRow.treeExpand);
       if (!clickRow[this.treeChildrenLazyKey]) {
         const toggleExpandRecursive = data => {
           if (Object.prototype.toString.call(data) === "[object Array]") {
-            data.forEach(srcNode => {
-              const row = srcNode.tableRowData;
+            data.forEach(node => {
+              const row = node.tableRowData;
               this.$set(row, "rowShow", clickRow.treeExpand);
               // 获得显示行的最大层级
               if (
@@ -365,34 +434,27 @@ export default {
                 !clickRow.treeExpand ||
                 (clickRow.treeExpand && row.treeExpand)
               ) {
-                toggleExpandRecursive(srcNode[this.treeChildrenKey]);
+                toggleExpandRecursive(node[this.treeChildrenKey]);
               }
             });
           }
         };
-        const treeFullIndex = String(clickRow.treeFullIndex);
-        const srcData = this.mapData[String(treeFullIndex)];
-        toggleExpandRecursive(srcData[this.treeChildrenKey]);
+        const srcNode = this.getSrcNode(clickRow);
+        toggleExpandRecursive(srcNode[this.treeChildrenKey]);
 
         // 如果是收起，并且显示最大级大于等于点击行，并且没有其他兄弟行展开，则显示最大级减1
         if (
           !clickRow.treeExpand &&
           parseInt(this.maxLevelShow) >= parseInt(clickRow.treeLevel)
         ) {
-          let srcDataChildren = this.treeData;
+          let srcNodeChildren = this.treeData;
           const parentRow = this.getParent(clickRow);
           if (parentRow) {
-            const parentRowSrcData = this.mapData[
-              String(parentRow.treeFullIndex)
-            ];
-            srcDataChildren = parentRowSrcData[this.treeChildrenKey];
+            const parentRowSrcNode = this.getSrcNode(parentRow);
+            srcNodeChildren = parentRowSrcNode[this.treeChildrenKey];
           }
 
-          if (
-            Object.prototype.toString.call(this.treeData) ===
-              "[object Array]" &&
-            !srcDataChildren.some(srcNode => srcNode.tableRowData.treeExpand)
-          ) {
+          if (!srcNodeChildren.some(node => node.tableRowData.treeExpand)) {
             this.maxLevelShow = parseInt(clickRow.treeLevel) - 1;
             if (this.maxLevelShow < 0) this.maxLevelShow = 0;
           }
@@ -435,56 +497,6 @@ export default {
           columnExpandWidthInit + this.maxLevelShow * this.columnExpandIndent;
       }
       this.$emit("toggle-expand", clickRow);
-    },
-    delRow(delRow) {
-      const delRowTreeFullIndex = String(delRow.treeFullIndex);
-      const index = this.getRowIndex(delRow);
-      let count = 1;
-      // 如果删除行有子孙行，则一起删除
-      if (delRow.treeHasChildren) {
-        for (let i = index + 1, len = this.data.length; i < len; i++) {
-          const row = this.data[i];
-          if (parseInt(row.treeLevel) <= parseInt(delRow.treeLevel)) {
-            break;
-          }
-          count++;
-        }
-      }
-
-      // 如果删除行的父级只有此行，删除后改变父级状态，并且清理原数据
-      const parentRow = this.getParent(delRow);
-      if (parentRow) {
-        const parentRowSrcData = this.mapData[String(parentRow.treeFullIndex)];
-        const srcDataChildren = parentRowSrcData[this.treeChildrenKey];
-        let treeHasChildren = srcDataChildren.length > 1;
-        if (treeHasChildren) {
-          const delSrcDataIndex = srcDataChildren.findIndex(
-            srcNode =>
-              String(srcNode.tableRowData.treeFullIndex) === delRowTreeFullIndex
-          );
-          srcDataChildren.splice(delSrcDataIndex, 1);
-          treeHasChildren = srcDataChildren.length > 1;
-        }
-        if (!treeHasChildren) delete parentRowSrcData[this.treeChildrenKey];
-        this.$set(parentRow, "treeHasChildren", treeHasChildren);
-      } else {
-        if (
-          Object.prototype.toString.call(this.treeData) === "[object Array]" &&
-          this.treeData.length
-        ) {
-          this.treeData.splice(
-            this.treeData.findIndex(
-              srcNode =>
-                String(srcNode.tableRowData.treeFullIndex) ===
-                delRowTreeFullIndex
-            ),
-            1
-          );
-        }
-      }
-      delete this.mapData[delRowTreeFullIndex];
-
-      this.data.splice(index, count);
     },
     // 切换勾选取消行
     toggleRowSelection(clickRow, selected) {
