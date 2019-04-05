@@ -259,7 +259,7 @@ export default {
           delete row[this.treeChildrenKey];
           result.rows.push(row);
           this.$set(row, "rowIndex", result.rows.length);
-          const treeExpand = this.expand(row);
+
           // 第一层级根节点的初始化
           if (level === 0) {
             fullIndex = "";
@@ -276,6 +276,9 @@ export default {
           fullIndex = `${fullIndex}${i}`;
           this.$set(row, "treeFullIndex", String(fullIndex));
           this.$set(row, "treeLevel", level);
+
+          const treeExpand = this.expand(row);
+
           this.$set(row, "treeExpand", treeExpand);
           this.$set(row, "rowShow", show);
           this.$set(

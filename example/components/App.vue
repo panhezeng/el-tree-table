@@ -121,7 +121,7 @@ export default {
           }
         }
       },
-      expandIndexes: [],
+      expandIndexes: ["1"],
       treeData: [
         {
           id: 1,
