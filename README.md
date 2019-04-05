@@ -2,6 +2,8 @@
 
 # 注意！！！！！！！！！！！ 官方 element table 已经实现了 tree table 功能，请优先使用官方实现，虽然官方此功能还挺简陋。
 
+本组件支持自定义获取树形数据的子节点的 key，懒加载的 treeChildrenLazyKey，是否全部展开，展开指定节点，操作 icon，是否关联勾选等，具体看示例及其源码
+
 ## 示例
 
 [点击预览](https://panhezeng.github.io/el-tree-table/)
