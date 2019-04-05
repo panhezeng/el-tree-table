@@ -304,6 +304,8 @@ export default {
           this.mapData[String(fullIndex)] = srcNode;
 
           let children = srcNode[this.treeChildrenKey];
+
+          // 如果子节点数据不是数组，并且有子节点数据，并且默认展开，并且有加载回调，则执行加载回调方法
           if (
             Object.prototype.toString.call(children) !== "[object Array]" &&
             row.treeHasChildren &&
@@ -316,6 +318,8 @@ export default {
               children = null;
             }
           }
+          // 如果子节点数据是有长度数组，则递归
+          // 否则如果没有子节点数据，又设置要展开，则重置为不展开和没有子节点数据
           if (
             Object.prototype.toString.call(children) === "[object Array]" &&
             children.length
@@ -447,7 +451,10 @@ export default {
     // 切换展开和收起行
     async toggleExpand(clickRow) {
       this.$set(clickRow, "treeExpand", !clickRow.treeExpand);
+      // 如果是点击展开，并且懒加载
       if (clickRow.treeExpand && clickRow[this.treeChildrenLazyKey]) {
+        // 如果有加载回调，则执行
+        // 否则外部监听"toggle-expand"事件，外部实现
         if (this.loadChildren) {
           this.setTreeChildrenLoading(clickRow);
           const children = await this.loadChildren(clickRow);
