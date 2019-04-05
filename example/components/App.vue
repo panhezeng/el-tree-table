@@ -151,7 +151,7 @@ export default {
         {
           id: 11,
           title: "标题1-3",
-          children_count: 1
+          lazy: true
         }
       ]
     };
@@ -176,11 +176,12 @@ export default {
     toggleExpand(row) {
       console.log("getParent", this.$refs.treeTable.getParent(row));
       // 如果是展开，并且还没孩子节点数据，则加载
-      if (row.treeExpand && !(row.children && row.children.length)) {
+      if (row.treeExpand && row.lazy) {
+        const treeFullIndex = row.treeFullIndex;
         // 加载动画
-        this.$refs.treeTable.loadingFullIndex = row.treeFullIndex;
+        this.$refs.treeTable.loadingFullIndex = treeFullIndex;
         setTimeout(() => {
-          row.children = [
+          const children = [
             {
               id: 12,
               title: "标题1-3-1",
@@ -192,11 +193,12 @@ export default {
               ]
             }
           ];
-          this.expandUniqueValues = this.$refs.treeTable
-            .getExpandRows()
-            .map(value => value.treeFullIndex);
-          // 触发重新渲染数据
-          this.treeData = this.treeData.slice();
+          this.$refs.treeTable.addTreeChildren(row, children);
+          // this.expandUniqueValues = this.$refs.treeTable
+          //   .getExpandRows()
+          //   .map(value => value.treeFullIndex);
+          // // 触发重新渲染数据
+          // this.treeData = this.treeData.slice();
           // 取消加载动画
           this.$refs.treeTable.loadingFullIndex = "";
         }, 1000);
