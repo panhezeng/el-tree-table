@@ -157,6 +157,43 @@ or
 <script src="https://cdn.jsdelivr.net/npm/@panhezeng/el-tree-table@latest/dist/el-tree-table.min.js"></script>
 ```
 
+### 懒加载
+
+```vue
+<el-tree-table @toggle-expand="toggleExpand" />
+```
+
+```vue
+<script>
+export default {
+  methods: {
+    toggleExpand(row) {
+      // 如果点击行的行为是展开，并且是需要懒加载子节点数据，则异步加载
+      if (row.treeExpand && row.lazy) {
+        // 加载动画
+        this.$refs.treeTable.setTreeChildrenLoading(row);
+        setTimeout(() => {
+          const children = [
+            {
+              id: 12,
+              title: "标题1-3-1",
+              children: [
+                {
+                  id: 13,
+                  title: "标题1-3-1-1"
+                }
+              ]
+            }
+          ];
+          this.$refs.treeTable.addTreeChildren(row, children);
+        }, 1000);
+      }
+    }
+  }
+};
+</script>
+```
+
 ## 编译
 
 ```bash

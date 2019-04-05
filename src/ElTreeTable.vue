@@ -24,7 +24,7 @@
         <div
           :style="`margin-left: ${scope.row.treeLevel * columnExpandIndent}px;`"
         >
-          <span v-if="loadingIcon(scope.row)"
+          <span v-if="scope.row.treeChildrenLoading"
             ><i class="el-icon-loading"
           /></span>
           <span
@@ -196,10 +196,8 @@ export default {
       return row.rowShow === false ? { display: "none" } : null;
     },
     // 是否显示加载中Icon
-    loadingIcon(row) {
-      return (
-        this.loadingFullIndex && this.loadingFullIndex === row.treeFullIndex
-      );
+    setTreeChildrenLoading(row, show = true) {
+      this.$set(row, "treeChildrenLoading", show);
     },
     // 是否展开
     expand(row) {
@@ -336,6 +334,7 @@ export default {
       this.maxLevelShow = result.maxLevelShow;
       const index = this.getRowIndex(parentRow);
       this.data.splice(index + 1, 0, ...result.rows);
+      this.setTreeChildrenLoading(parentRow, false);
     },
     // 切换展开和收起行
     toggleExpand: function(clickRow) {

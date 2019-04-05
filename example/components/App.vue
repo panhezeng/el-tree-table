@@ -175,11 +175,10 @@ export default {
     },
     toggleExpand(row) {
       console.log("getParent", this.$refs.treeTable.getParent(row));
-      // 如果是展开，并且还没孩子节点数据，则加载
+      // 如果点击行的行为是展开，并且是需要懒加载子节点数据，则异步加载
       if (row.treeExpand && row.lazy) {
-        const treeFullIndex = row.treeFullIndex;
         // 加载动画
-        this.$refs.treeTable.loadingFullIndex = treeFullIndex;
+        this.$refs.treeTable.setTreeChildrenLoading(row);
         setTimeout(() => {
           const children = [
             {
@@ -194,13 +193,6 @@ export default {
             }
           ];
           this.$refs.treeTable.addTreeChildren(row, children);
-          // this.expandUniqueValues = this.$refs.treeTable
-          //   .getExpandRows()
-          //   .map(value => value.treeFullIndex);
-          // // 触发重新渲染数据
-          // this.treeData = this.treeData.slice();
-          // 取消加载动画
-          this.$refs.treeTable.loadingFullIndex = "";
         }, 1000);
       }
     }
