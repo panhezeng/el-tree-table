@@ -141,17 +141,25 @@ export default {
         return {};
       }
     },
+    // 展开 icon class
     expandIcon: {
       type: String,
       default: "el-icon-caret-bottom"
     },
+    // 收起 icon class
     collapseIcon: {
       type: String,
       default: "el-icon-caret-right"
     },
+    // 叶子节点 icon class
     leafIcon: {
       type: String,
       default: "el-icon-minus"
+    },
+    // 加载子节点数组回调函数，参数是当前row数据，必须支持 async await，返回值是数组
+    loadChildren: {
+      type: Function,
+      default: undefined
     }
   },
   data() {
@@ -169,12 +177,12 @@ export default {
   },
   watch: {
     treeData: {
-      handler() {
+      async handler() {
         this.mapData = [];
         this.data = [];
         this.maxLevelShow = 0;
         if (this.treeData.length) {
-          const result = this.treeToTableData(this.treeData, true);
+          const result = await this.treeToTableData(this.treeData, true);
           this.maxLevelShow = result.maxLevelShow;
           this.data = result.rows;
         }
@@ -239,7 +247,7 @@ export default {
      * @param level 当前递归的层级
      * @return {Object}
      */
-    treeToTableData(
+    async treeToTableData(
       src,
       show,
       result = { rows: [], maxLevelShow: 0 },
@@ -276,11 +284,9 @@ export default {
           fullIndex = `${fullIndex}${i}`;
           this.$set(row, "treeFullIndex", String(fullIndex));
           this.$set(row, "treeLevel", level);
-
-          const treeExpand = this.expand(row);
-
-          this.$set(row, "treeExpand", treeExpand);
           this.$set(row, "rowShow", show);
+          const treeExpand = this.expand(row);
+          this.$set(row, "treeExpand", treeExpand);
           this.$set(
             row,
             "treeHasChildren",
@@ -297,19 +303,38 @@ export default {
           // 建立转换后和转换前数据的关系，用于通过转换后的数据的treeFullIndex，查找到转换前的对应数据
           this.mapData[String(fullIndex)] = srcNode;
 
-          const children = srcNode[this.treeChildrenKey];
+          let children = srcNode[this.treeChildrenKey];
+          if (
+            Object.prototype.toString.call(children) !== "[object Array]" &&
+            row.treeHasChildren &&
+            treeExpand &&
+            this.loadChildren
+          ) {
+            try {
+              children = await this.loadChildren(row);
+            } catch (e) {
+              children = null;
+            }
+          }
           if (
             Object.prototype.toString.call(children) === "[object Array]" &&
             children.length
           ) {
             this.$set(row, "treeHasChildren", true);
-            this.treeToTableData(
-              children,
-              treeExpand,
-              result,
-              `${fullIndex}-`,
-              level + 1
-            );
+            try {
+              await this.treeToTableData(
+                children,
+                treeExpand,
+                result,
+                `${fullIndex}-`,
+                level + 1
+              );
+            } catch (e) {
+              continue;
+            }
+          } else if (treeExpand) {
+            this.$set(row, "treeHasChildren", false);
+            this.$set(row, "treeExpand", false);
           }
         }
       }
@@ -342,7 +367,7 @@ export default {
               String(srcNode.tableRowData.treeFullIndex) === delRowTreeFullIndex
           );
           srcNodeChildren.splice(delSrcNodeIndex, 1);
-          treeHasChildren = srcNodeChildren.length > 1;
+          treeHasChildren = srcNodeChildren.length > 0;
         }
         if (!treeHasChildren) delete parentRowSrcNode[this.treeChildrenKey];
         this.$set(parentRow, "treeHasChildren", treeHasChildren);
@@ -366,29 +391,34 @@ export default {
      * @param parentRow 父行
      * @param children 子数组
      */
-    addTreeChildren(parentRow, children) {
-      delete parentRow[this.treeChildrenLazyKey];
-      const srcNode = this.getSrcNode(parentRow);
-      delete srcNode[this.treeChildrenLazyKey];
-      const oldChildren = srcNode[this.treeChildrenKey];
-      if (Object.prototype.toString.call(oldChildren) === "[object Array]") {
-        for (let i = oldChildren.length; i--; ) {
-          this.delRow(oldChildren[i].tableRowData);
+    async addTreeChildren(parentRow, children) {
+      if (
+        Object.prototype.toString.call(parentRow) === "[object Object]" &&
+        Object.prototype.toString.call(children) === "[object Array]"
+      ) {
+        delete parentRow[this.treeChildrenLazyKey];
+        const srcNode = this.getSrcNode(parentRow);
+        delete srcNode[this.treeChildrenLazyKey];
+        const oldChildren = srcNode[this.treeChildrenKey];
+        if (Object.prototype.toString.call(oldChildren) === "[object Array]") {
+          for (let i = oldChildren.length; i--; ) {
+            this.delRow(oldChildren[i].tableRowData);
+          }
         }
+        srcNode[this.treeChildrenKey] = children;
+        this.$set(parentRow, "treeHasChildren", true);
+        const result = await this.treeToTableData(
+          children,
+          true,
+          { rows: [], maxLevelShow: this.maxLevelShow },
+          `${parentRow.treeFullIndex}-`,
+          parseInt(parentRow.treeLevel) + 1
+        );
+        this.maxLevelShow = result.maxLevelShow;
+        const index = this.getRowIndex(parentRow);
+        this.data.splice(index + 1, 0, ...result.rows);
+        this.setTreeChildrenLoading(parentRow, false);
       }
-      srcNode[this.treeChildrenKey] = children;
-      this.$set(parentRow, "treeHasChildren", true);
-      const result = this.treeToTableData(
-        children,
-        true,
-        { rows: [], maxLevelShow: this.maxLevelShow },
-        `${parentRow.treeFullIndex}-`,
-        parseInt(parentRow.treeLevel) + 1
-      );
-      this.maxLevelShow = result.maxLevelShow;
-      const index = this.getRowIndex(parentRow);
-      this.data.splice(index + 1, 0, ...result.rows);
-      this.setTreeChildrenLoading(parentRow, false);
     },
     /**
      *
@@ -415,9 +445,15 @@ export default {
       }
     },
     // 切换展开和收起行
-    toggleExpand(clickRow) {
+    async toggleExpand(clickRow) {
       this.$set(clickRow, "treeExpand", !clickRow.treeExpand);
-      if (!clickRow[this.treeChildrenLazyKey]) {
+      if (clickRow.treeExpand && clickRow[this.treeChildrenLazyKey]) {
+        if (this.loadChildren) {
+          this.setTreeChildrenLoading(clickRow);
+          const children = await this.loadChildren(clickRow);
+          this.addTreeChildren(clickRow, children);
+        }
+      } else {
         const toggleExpandRecursive = data => {
           if (Object.prototype.toString.call(data) === "[object Array]") {
             data.forEach(node => {

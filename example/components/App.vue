@@ -6,6 +6,7 @@
       :tree-data="treeData"
       :columns="columns"
       :column-custom-render="columnCustomRender"
+      :load-children="loadChildren"
       style="width: 100%"
       @init-data="initData"
       @toggle-expand="toggleExpand"
@@ -23,8 +24,8 @@
 <script>
 // import '../../dist/el-tree-table.min.js'
 //  import Vue from 'vue'
-// import ElTreeTable from "../../dist/el-tree-table.min.js";
-import ElTreeTable from "../../src/ElTreeTable.vue";
+import ElTreeTable from "../../dist/el-tree-table.min.js";
+// import ElTreeTable from "../../src/ElTreeTable.vue";
 //  const ElTreeTable = require('../../dist/el-tree-table.min.js')
 
 //  Vue.use(ElTreeTable)
@@ -121,7 +122,7 @@ export default {
           }
         }
       },
-      expandIndexes: ["1"],
+      expandIndexes: [],
       treeData: [
         {
           id: 1,
@@ -194,28 +195,50 @@ export default {
     initData(data) {
       console.log("initData", data);
     },
+    async loadChildren() {
+      const getData = () => {
+        return new Promise(function(resolve) {
+          setTimeout(function() {
+            resolve([
+              {
+                id: 12,
+                title: "标题1-3-1",
+                children: [
+                  {
+                    id: 13,
+                    title: "标题1-3-1-1"
+                  }
+                ]
+              }
+            ]);
+          }, 1000);
+        });
+      };
+      const children = await getData();
+      return children;
+    },
     toggleExpand(row) {
       console.log("getParent", this.$refs.treeTable.getParent(row));
       // 如果点击行的行为是展开，并且是需要懒加载子节点数据，则异步加载
-      if (row.treeExpand && row.lazy) {
-        // 加载动画
-        this.$refs.treeTable.setTreeChildrenLoading(row);
-        setTimeout(() => {
-          const children = [
-            {
-              id: 12,
-              title: "标题1-3-1",
-              children: [
-                {
-                  id: 13,
-                  title: "标题1-3-1-1"
-                }
-              ]
-            }
-          ];
-          this.$refs.treeTable.addTreeChildren(row, children);
-        }, 1000);
-      }
+      // if (row.treeExpand && row.lazy) {
+      //   // 加载动画
+      //   this.$refs.treeTable.setTreeChildrenLoading(row);
+      //   setTimeout(() => {
+      //     const children = [
+      //       {
+      //         id: 12,
+      //         title: "标题1-3-1",
+      //         children: [
+      //           {
+      //             id: 13,
+      //             title: "标题1-3-1-1"
+      //           }
+      //         ]
+      //       }
+      //     ];
+      //     this.$refs.treeTable.addTreeChildren(row, children);
+      //   }, 1000);
+      // }
     }
   }
 };

@@ -20,13 +20,15 @@ export default {
     treeChildrenKey: { type: String, default: "children" },
     // 孩子数据数量的key，是否显示展开按钮，通过treeChildrenKey和treeChildrenLazyKey一起判断，
     // 如果通过treeChildrenKey获得的数组为空，而通过treeChildrenLazyKey获得值为真，则也会显示展开按钮，结合toggle-expand事件可实现懒加载
-    // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandUniqueValues，实现更新treeData后还原展开状态
+    // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandIndexes，实现更新treeData后还原展开状态
     treeChildrenLazyKey: { type: String, default: "lazy" },
     // 树形数据结构，用来转换成表格数据
-    treeData: {},
-    // 表格数据结构，如果传了这个，就不用treeData了
-    // tableData的row数据对象必须有row.treeFullIndex，row.treeLevel, row.treeHasChildren属性，而且值必须正确有效
-    tableData: {},
+    treeData: {
+      type: Array,
+      default() {
+        return [];
+      }
+    },
     // 是否展开所有
     expandAll: {
       type: Boolean,
@@ -74,17 +76,25 @@ export default {
         return {};
       }
     },
+    // 展开 icon class
     expandIcon: {
       type: String,
       default: "el-icon-caret-bottom"
     },
+    // 收起 icon class
     collapseIcon: {
       type: String,
       default: "el-icon-caret-right"
     },
+    // 叶子节点 icon class
     leafIcon: {
       type: String,
       default: "el-icon-minus"
+    },
+    // 加载子节点数组回调函数，参数是当前row数据，必须支持 async await，返回值是数组
+    loadChildren: {
+      type: Function,
+      default: undefined
     }
   }
 };
