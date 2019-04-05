@@ -30,8 +30,8 @@ export default {
       type: Boolean,
       default: false
     },
-    // 默认需要展开的行，数组值是每行的uniqueValue
-    expandUniqueValues: {
+    // 默认需要展开的行，数组值是每行的treeFullIndex
+    expandIndexes: {
       type: Array,
       default() {
         return [];
@@ -192,6 +192,21 @@ export default {
   }
 };
 </script>
+```
+
+### 删除行
+
+会一并删除子孙行，如果希望子孙行进一级，可以删除前先备份当前行的原数据的子数组，删除完成后，再用 addTreeChildren 添加
+
+```javascript
+this.$refs.treeTable.delRow(row);
+```
+
+获得删除行的原数据的子数组
+
+```javascript
+const srcData = this.mapData[String(row.treeFullIndex)];
+const srcDataChildren = srcData[this.treeChildrenKey];
 ```
 
 ## 编译

@@ -4,6 +4,7 @@
     class="el-tree-table"
     :row-style="getRowStyle"
     :cell-style="getRowStyle"
+    :lazy="false"
     :data="data"
     v-bind="$attrs"
     @select="handleSelect"
@@ -31,8 +32,12 @@
             @click="toggleExpand(scope.row, scope.$index)"
             v-else-if="scope.row.treeHasChildren"
           >
-            <i v-if="scope.row.treeExpand" :class="expandIcon" />
-            <i v-else :class="collapseIcon" />
+            <i
+              v-if="scope.row.treeExpand"
+              :class="expandIcon"
+              style="cursor: pointer;"
+            />
+            <i v-else :class="collapseIcon" style="cursor: pointer;" />
           </span>
           <span v-else><i :class="leafIcon"/></span>
         </div>
@@ -47,16 +52,17 @@
               scope.row[column.prop]
             }}</template>
             <component
+              v-if="
+                columnCustomRender[column.prop] &&
+                  columnCustomRender[column.prop].component
+              "
               :is="columnCustomRender[column.prop].component"
               v-bind="
                 Object.assign({}, columnCustomRender[column.prop].props, {
                   cellData: scope
                 })
               "
-              v-if="
-                columnCustomRender[column.prop] &&
-                  columnCustomRender[column.prop].component
-              "
+              @del="delRow"
             />
           </template>
         </el-table-column>
@@ -80,7 +86,7 @@ export default {
     treeChildrenKey: { type: String, default: "children" },
     // 孩子数据数量的key，是否显示展开按钮，通过treeChildrenKey和treeChildrenLazyKey一起判断，
     // 如果通过treeChildrenKey获得的数组为空，而通过treeChildrenLazyKey获得值为真，则也会显示展开按钮，结合toggle-expand事件可实现懒加载
-    // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandUniqueValues，实现更新treeData后还原展开状态
+    // 懒加载获得的子节点数据后，更新treeData前，通过getExpandRows可以获得所有已展开的数据，结合expandIndexes，实现更新treeData后还原展开状态
     treeChildrenLazyKey: { type: String, default: "lazy" },
     // 树形数据结构，用来转换成表格数据
     treeData: {},
@@ -92,8 +98,8 @@ export default {
       type: Boolean,
       default: false
     },
-    // 默认需要展开的行，数组值是每行的uniqueValue
-    expandUniqueValues: {
+    // 默认需要展开的行，数组值是每行的treeFullIndex
+    expandIndexes: {
       type: Array,
       default() {
         return [];
@@ -169,9 +175,7 @@ export default {
           Object.prototype.toString.call(this.treeData) === "[object Array]" &&
           this.treeData.length
         ) {
-          const result = this.treeToTableData(this.treeData, true);
-          this.maxLevelShow = result.maxLevelShow;
-          this.data = result.rows;
+          this.initDataByTreeData(this.treeData);
           this.$emit("init-data", this.data);
         }
       },
@@ -202,8 +206,7 @@ export default {
     // 是否展开
     expand(row) {
       return (
-        this.expandAll ||
-        this.expandUniqueValues.indexOf(row.treeFullIndex) !== -1
+        this.expandAll || this.expandIndexes.indexOf(row.treeFullIndex) !== -1
       );
     },
     getRowIndex(row) {
@@ -221,7 +224,7 @@ export default {
           iterateRow => String(iterateRow.treeFullIndex) === parentFullIndex
         );
       } else {
-        return row;
+        return null;
       }
     },
     // 获得所有展开的行
@@ -233,6 +236,11 @@ export default {
         return this.data.filter(row => row.treeExpand);
       }
       return [];
+    },
+    initDataByTreeData(treeData) {
+      const result = this.treeToTableData(treeData, true);
+      this.maxLevelShow = result.maxLevelShow;
+      this.data = result.rows;
     },
     /**
      * 把树形嵌套数据结构转换为表格并列数据结构，并且增加属性标识每条数据对象之间的树形关系
@@ -255,13 +263,11 @@ export default {
         src.length
       ) {
         for (let i = 0, len = src.length; i < len; i++) {
-          const srcRow = src[i];
+          const srcNode = src[i];
           // 克隆，不改变原数据
-          const row = JSON.parse(JSON.stringify(srcRow));
-          // 禁止element table原生的tree table功能
-          row.hasChildren = false;
+          const row = JSON.parse(JSON.stringify(srcNode));
+          srcNode.tableRowData = row;
           delete row[this.treeChildrenKey];
-          // 禁止element table 原生 tree table 功能
           result.rows.push(row);
           this.$set(row, "rowIndex", result.rows.length);
           const treeExpand = this.expand(row);
@@ -286,7 +292,7 @@ export default {
           this.$set(
             row,
             "treeHasChildren",
-            Boolean(srcRow[this.treeChildrenLazyKey])
+            Boolean(srcNode[this.treeChildrenLazyKey])
           );
           // 获得显示行的最大层级
           if (level > result.maxLevelShow && show) {
@@ -297,9 +303,9 @@ export default {
           }
 
           // 建立转换后和转换前数据的关系，用于通过转换后的数据的treeFullIndex，查找到转换前的对应数据
-          this.mapData[String(fullIndex)] = srcRow;
+          this.mapData[String(fullIndex)] = srcNode;
 
-          const children = srcRow[this.treeChildrenKey];
+          const children = srcNode[this.treeChildrenKey];
           if (
             Object.prototype.toString.call(children) === "[object Array]" &&
             children.length
@@ -337,46 +343,148 @@ export default {
       this.setTreeChildrenLoading(parentRow, false);
     },
     // 切换展开和收起行
-    toggleExpand: function(clickRow) {
+    toggleExpand(clickRow) {
       this.$set(clickRow, "treeExpand", !clickRow.treeExpand);
       if (!clickRow[this.treeChildrenLazyKey]) {
-        this.maxLevelShow = clickRow.treeLevel;
-        let continueTest = null;
-        // 必须从上到下遍历，不然通过正则匹配处理子节点row的逻辑无法实现
-        for (let i = 0, len = this.data.length; i < len; i++) {
-          const row = this.data[i];
-          // 如果遍历的行不是点击的行，则继续
-          if (row.treeFullIndex !== clickRow.treeFullIndex) {
-            // 如果有跳过检查，并且遍历的行满足条件，则执行跳过
-            // 否则如果遍历的行是当前点击行的子节点
-            if (continueTest && continueTest.test(row.treeFullIndex)) {
-              continue;
-            } else if (
-              new RegExp(`^${clickRow.treeFullIndex}`).test(row.treeFullIndex)
-            ) {
+        const toggleExpandRecursive = data => {
+          if (Object.prototype.toString.call(data) === "[object Array]") {
+            data.forEach(srcNode => {
+              const row = srcNode.tableRowData;
               this.$set(row, "rowShow", clickRow.treeExpand);
-
-              continueTest = null;
-              // 如果当前点击是展开，并且下一行有子节点，而且是不展开，则它后面的子节点都跳过
+              // 获得显示行的最大层级
               if (
                 clickRow.treeExpand &&
-                row.treeHasChildren &&
-                !row.treeExpand
+                parseInt(row.treeLevel) > parseInt(this.maxLevelShow) &&
+                row.rowShow
               ) {
-                continueTest = new RegExp(`^${row.treeFullIndex}`);
+                this.maxLevelShow = row.treeLevel;
               }
-            }
-            // 获得显示行的最大层级
-            if (row.treeLevel > this.maxLevelShow && row.rowShow) {
-              this.maxLevelShow = row.treeLevel;
-            }
+              // 如果是点击收起，则所有子孙行都隐藏
+              // 或者是点击展开，并且子孙行也是展开，则都显示
+              if (
+                !clickRow.treeExpand ||
+                (clickRow.treeExpand && row.treeExpand)
+              ) {
+                toggleExpandRecursive(srcNode[this.treeChildrenKey]);
+              }
+            });
+          }
+        };
+        const treeFullIndex = String(clickRow.treeFullIndex);
+        const srcData = this.mapData[String(treeFullIndex)];
+        toggleExpandRecursive(srcData[this.treeChildrenKey]);
+
+        // 如果是收起，并且显示最大级大于等于点击行，并且没有其他兄弟行展开，则显示最大级减1
+        if (
+          !clickRow.treeExpand &&
+          parseInt(this.maxLevelShow) >= parseInt(clickRow.treeLevel)
+        ) {
+          let srcDataChildren = this.treeData;
+          const parentRow = this.getParent(clickRow);
+          if (parentRow) {
+            const parentRowSrcData = this.mapData[
+              String(parentRow.treeFullIndex)
+            ];
+            srcDataChildren = parentRowSrcData[this.treeChildrenKey];
+          }
+
+          if (
+            Object.prototype.toString.call(this.treeData) ===
+              "[object Array]" &&
+            !srcDataChildren.some(srcNode => srcNode.tableRowData.treeExpand)
+          ) {
+            this.maxLevelShow = parseInt(clickRow.treeLevel) - 1;
+            if (this.maxLevelShow < 0) this.maxLevelShow = 0;
           }
         }
+
+        // this.maxLevelShow = clickRow.treeLevel;
+        // let continueTest = null;
+        // // 必须从上到下遍历，不然通过正则匹配处理子节点row的逻辑无法实现
+        // for (let i = 0, len = this.data.length; i < len; i++) {
+        //   const row = this.data[i];
+        //   // 如果遍历的行不是点击的行，则继续
+        //   if (row.treeFullIndex !== clickRow.treeFullIndex) {
+        //     // 如果有跳过检查，并且遍历的行满足条件，则执行跳过
+        //     // 否则如果遍历的行是当前点击行的子节点
+        //     if (continueTest && continueTest.test(row.treeFullIndex)) {
+        //       continue;
+        //     } else if (
+        //       new RegExp(`^${clickRow.treeFullIndex}`).test(row.treeFullIndex)
+        //     ) {
+        //       this.$set(row, "rowShow", clickRow.treeExpand);
+        //
+        //       continueTest = null;
+        //       // 如果当前点击是展开，并且下一行有子节点，而且是不展开，则它后面的子节点都跳过
+        //       if (
+        //         clickRow.treeExpand &&
+        //         row.treeHasChildren &&
+        //         !row.treeExpand
+        //       ) {
+        //         continueTest = new RegExp(`^${row.treeFullIndex}`);
+        //       }
+        //     }
+        //     // 获得显示行的最大层级
+        //     if (row.treeLevel > this.maxLevelShow && row.rowShow) {
+        //       this.maxLevelShow = row.treeLevel;
+        //     }
+        //   }
+        // }
 
         this.columnExpandWidth =
           columnExpandWidthInit + this.maxLevelShow * this.columnExpandIndent;
       }
       this.$emit("toggle-expand", clickRow);
+    },
+    delRow(delRow) {
+      const delRowTreeFullIndex = String(delRow.treeFullIndex);
+      const index = this.getRowIndex(delRow);
+      let count = 1;
+      // 如果删除行有子孙行，则一起删除
+      if (delRow.treeHasChildren) {
+        for (let i = index + 1, len = this.data.length; i < len; i++) {
+          const row = this.data[i];
+          if (parseInt(row.treeLevel) <= parseInt(delRow.treeLevel)) {
+            break;
+          }
+          count++;
+        }
+      }
+
+      // 如果删除行的父级只有此行，删除后改变父级状态，并且清理原数据
+      const parentRow = this.getParent(delRow);
+      if (parentRow) {
+        const parentRowSrcData = this.mapData[String(parentRow.treeFullIndex)];
+        const srcDataChildren = parentRowSrcData[this.treeChildrenKey];
+        let treeHasChildren = srcDataChildren.length > 1;
+        if (treeHasChildren) {
+          const delSrcDataIndex = srcDataChildren.findIndex(
+            srcNode =>
+              String(srcNode.tableRowData.treeFullIndex) === delRowTreeFullIndex
+          );
+          srcDataChildren.splice(delSrcDataIndex, 1);
+          treeHasChildren = srcDataChildren.length > 1;
+        }
+        if (!treeHasChildren) delete parentRowSrcData[this.treeChildrenKey];
+        this.$set(parentRow, "treeHasChildren", treeHasChildren);
+      } else {
+        if (
+          Object.prototype.toString.call(this.treeData) === "[object Array]" &&
+          this.treeData.length
+        ) {
+          this.treeData.splice(
+            this.treeData.findIndex(
+              srcNode =>
+                String(srcNode.tableRowData.treeFullIndex) ===
+                delRowTreeFullIndex
+            ),
+            1
+          );
+        }
+      }
+      delete this.mapData[delRowTreeFullIndex];
+
+      this.data.splice(index, count);
     },
     // 切换勾选取消行
     toggleRowSelection(clickRow, selected) {

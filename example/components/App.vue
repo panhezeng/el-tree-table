@@ -2,7 +2,7 @@
   <div id="app">
     <el-tree-table
       ref="treeTable"
-      :expand-unique-values="expandUniqueValues"
+      :expand-indexes="expandIndexes"
       :tree-data="treeData"
       :columns="columns"
       :column-custom-render="columnCustomRender"
@@ -90,6 +90,7 @@ export default {
             methods: {
               clickHandler() {
                 console.log(this.cellData, this.$attrs["test1"], this.test2);
+                this.$emit("del", this.cellData.row);
               }
             },
             template: `
@@ -100,7 +101,7 @@ export default {
           }
         }
       },
-      expandUniqueValues: [],
+      expandIndexes: [],
       treeData: [
         {
           id: 1,
