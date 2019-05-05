@@ -11,6 +11,7 @@
       @init-data="initData"
       @toggle-expand="toggleExpand"
       @selection-change="handleSelectionChange"
+      @sort-change="sortChange"
     >
       <el-table-column label="slot用法" width="100">
         <template v-slot="scope">
@@ -52,7 +53,8 @@ export default {
         {
           prop: "id",
           label: "ID",
-          width: 65
+          width: 65,
+          sortable: "custom"
         },
         {
           prop: "title",
@@ -126,7 +128,8 @@ export default {
       treeData: [
         {
           id: 1,
-          title: "标题1-1"
+          title: "标题1-1",
+          action: "test double cell render"
         },
         {
           id: 2,
@@ -175,7 +178,8 @@ export default {
           title: "标题1-3",
           lazy: true
         }
-      ]
+      ],
+      treeDataBackup: []
     };
   },
   methods: {
@@ -183,7 +187,7 @@ export default {
       console.log("handleSelectionChange", val);
       if (val && val.length) {
         console.log(
-          "handleSelectionChange P",
+          "handleSelectionChange",
           this.$refs.treeTable.getParent(val[0])
         );
       }
@@ -220,26 +224,40 @@ export default {
     },
     toggleExpand(row) {
       console.log("getParent", this.$refs.treeTable.getParent(row));
-      // 如果点击行的行为是展开，并且是需要懒加载子节点数据，则异步加载
-      // if (row.treeExpand && row.lazy) {
-      //   // 加载动画
-      //   this.$refs.treeTable.setTreeChildrenLoading(row);
-      //   setTimeout(() => {
-      //     const children = [
-      //       {
-      //         id: 12,
-      //         title: "标题1-3-1",
-      //         children: [
-      //           {
-      //             id: 13,
-      //             title: "标题1-3-1-1"
-      //           }
-      //         ]
-      //       }
-      //     ];
-      //     this.$refs.treeTable.addTreeChildren(row, children);
-      //   }, 1000);
-      // }
+    },
+    sortChange({ column, prop, order }) {
+      const treeDataSort = data => {
+        if (
+          Object.prototype.toString.call(data) === "[object Array]" &&
+          data.length
+        ) {
+          data.forEach(item => {
+            if (
+              Object.prototype.toString.call(item.children) ===
+                "[object Array]" &&
+              item.children.length
+            ) {
+              treeDataSort(item.children);
+            }
+          });
+
+          if (order === "ascending") {
+            data.sort((a, b) => {
+              return a[prop] - b[prop];
+            });
+          } else if (order === "descending") {
+            data.sort((a, b) => {
+              return b[prop] - a[prop];
+            });
+          } else {
+            // 还原默认排序，这里默认排序是按id升序
+            data.sort((a, b) => {
+              return a["id"] - b["id"];
+            });
+          }
+        }
+      };
+      treeDataSort(this.treeData);
     }
   }
 };

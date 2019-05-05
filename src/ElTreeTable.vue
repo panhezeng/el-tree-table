@@ -48,9 +48,6 @@
       <template v-for="column in columns">
         <el-table-column :key="column.prop" v-bind="column">
           <template v-slot="scope">
-            <template v-if="scope.row[column.prop]">{{
-              scope.row[column.prop]
-            }}</template>
             <component
               v-if="
                 columnCustomRender[column.prop] &&
@@ -63,6 +60,9 @@
                 })
               "
             />
+            <template v-else="scope.row[column.prop]">{{
+              scope.row[column.prop]
+            }}</template>
           </template>
         </el-table-column>
       </template>

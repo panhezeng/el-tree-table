@@ -222,19 +222,54 @@ const srcNode = this.getSrcNode(row);
 const srcNodeChildren = srcNode[this.treeChildrenKey];
 ```
 
-## 编译
+### 排序
 
-```bash
-# install dependencies
-npm install
+sortable="custom" @sort-change="sortChange"
 
-# 运行插件使用示例
-npm run dev:example
+````vue
+<script>
+export default {
+  methods: {
+    sortChange({ column, prop, order }) {
+      const treeDataSort = data => {
+        if (
+          Object.prototype.toString.call(data) === "[object Array]" &&
+          data.length
+        ) {
+          data.forEach(item => {
+            if (
+              Object.prototype.toString.call(item.children) ===
+                "[object Array]" &&
+              item.children.length
+            ) {
+              treeDataSort(item.children);
+            }
+          });
 
-# 编译插件
-npm run build
+          if (order === "ascending") {
+            data.sort((a, b) => {
+              return a[prop] - b[prop];
+            });
+          } else if (order === "descending") {
+            data.sort((a, b) => {
+              return b[prop] - a[prop];
+            });
+          } else {
+            // 还原默认排序，这里默认排序是按id升序
+            data.sort((a, b) => {
+              return a["id"] - b["id"];
+            });
+          }
+        }
+      };
+      treeDataSort(this.treeData);
+    }
+  }
+};
+</script>
 
-# 发版
-npm set @panhezeng:registry https://registry.npmjs.org/ && npm version patch && npm publish --access public && npm set @panhezeng:registry https://registry.npm.taobao.org/
-
-```
+## 编译 ```bash # install dependencies npm install # 运行插件使用示例 npm run
+dev:example # 编译插件 npm run build # 发版 npm set @panhezeng:registry
+https://registry.npmjs.org/ && npm version patch && npm publish --access public
+&& npm set @panhezeng:registry https://registry.npm.taobao.org/
+````
