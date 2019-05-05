@@ -226,7 +226,7 @@ const srcNodeChildren = srcNode[this.treeChildrenKey];
 
 sortable="custom" @sort-change="sortChange"
 
-````vue
+```vue
 <script>
 export default {
   methods: {
@@ -267,9 +267,21 @@ export default {
   }
 };
 </script>
+```
 
-## 编译 ```bash # install dependencies npm install # 运行插件使用示例 npm run
-dev:example # 编译插件 npm run build # 发版 npm set @panhezeng:registry
-https://registry.npmjs.org/ && npm version patch && npm publish --access public
-&& npm set @panhezeng:registry https://registry.npm.taobao.org/
-````
+## 编译
+
+```bash
+# install dependencies
+npm install
+
+# 运行插件使用示例
+npm run dev:example
+
+# 编译插件
+npm run build
+
+# 发版
+npm set registry https://registry.npmjs.org/ && npm set @panhezeng:registry https://registry.npmjs.org/ && npm version patch && npm publish --access public && npm set registry https://registry.npm.taobao.org/ && npm set @panhezeng:registry https://registry.npm.taobao.org/
+
+```
