@@ -265,8 +265,8 @@ export default {
           const row = JSON.parse(JSON.stringify(srcNode));
           srcNode.tableRowData = row;
           delete row[this.treeChildrenKey];
-          result.rows.push(row);
           this.$set(row, "rowIndex", result.rows.length);
+          result.rows.push(row);
 
           // 第一层级根节点的初始化
           if (level === 0) {
