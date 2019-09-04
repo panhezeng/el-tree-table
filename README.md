@@ -4,8 +4,6 @@
 
 本组件支持自定义获取树形数据的子节点的 key，懒加载的 treeChildrenLazyKey，是否全部展开，展开指定节点，自定义 icon，是否关联勾选，懒加载回调，删除，复制等，具体看示例及其源码
 
-打包 polyfills 应当是最终使用组件的应用的责任
-
 ## 示例
 
 [点击预览](https://panhezeng.github.io/el-tree-table/)
